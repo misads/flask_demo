@@ -23,5 +23,6 @@ python-dotenv==0.8.2
 Flask-APScheduler==1.10.1
 PyYAML==3.13
 MySQL-python==1.2.5
+pyecharts==0.5.11
 
 
