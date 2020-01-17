@@ -13,9 +13,9 @@ A fund analysis & recommendation website.
 - [x] Favoutite funds staring and history analysis.
 - [x] Trend track & Recommendation.
 
-![feature1](http://www.xyu.ink/wp-content/uploads/2020/01/feature1.png)
+<img src="http://www.xyu.ink/wp-content/uploads/2020/01/feature1.png" style="zoom:80%;" alt="feature1" />
 
-![feature2](http://www.xyu.ink/wp-content/uploads/2020/01/feature2.png)
+<img src="http://www.xyu.ink/wp-content/uploads/2020/01/feature2.png" style="zoom:77%;" alt="feature2" />
 
 ### Online Experience
 
