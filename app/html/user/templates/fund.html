@@ -67,7 +67,7 @@
     <div class="container">
         <div class="row">
             <div class="col-md-8">
-                <table class="table table-striped table-bordered">
+                <table class="table table-striped table-bordered" style="margin-bottom:0px;">
                     <caption>表1</caption>
                     <colgroup>
                         <col width="50px">
@@ -170,7 +170,9 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                <p class="text-muted wy-text-small" style="font-size:10px;margin-top: 5px;">最后更新: {{ last_update if last_update else 'None'}}</p>
             </div>
+
         </div>
     </div>
     {% else %}

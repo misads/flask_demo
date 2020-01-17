@@ -52,16 +52,15 @@ class Fund(db.Model):
         return "<Pages route {0}>".format(self.route)
 
 
-class Data(db.Model):
+class Configs(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(32))
-    value = db.Column(db.String(32))
-    time = db.Column(db.String(32))
+    value = db.Column(db.String(128))
+    comment = db.Column(db.String(128))
 
-    def __init__(self, name, value, time):
+    def __init__(self, name, value):
         self.name = name
         self.value = value
-        self.time = time
 
     def __repr__(self):
         return "<Pages route {0}>".format(self.route)

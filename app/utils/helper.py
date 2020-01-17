@@ -1,7 +1,7 @@
 # coding=utf-8
 from app.models import db, Users
 from flask import session
-from app.models import db, Fund, History, Favourite
+from app.models import db, Fund, History, Favourite, Configs
 import requests
 from .misc_utils import *
 import json
@@ -14,6 +14,60 @@ def authed():
 def get_fund_list():
     f_q = Fund.query.all()
     return [i.id for i in f_q]
+
+
+def get_config(key, default=None):
+
+    c_q = Configs.query.filter_by(name=key).first()
+    if c_q:
+        return c_q.value
+    else:
+        return default
+
+
+def get_last_update():
+    time_stamp = get_config('last_update')
+    if time_stamp:
+        return get_time_str(time_stamp)
+    else:
+        return None
+
+
+def set_config(key, value):
+
+    c_q = Configs.query.filter_by(name=key).first()
+    if c_q:
+        c_q.value = value
+    else:
+        new_config = Configs(name=key,value=value)
+        db.session.add(new_config)
+
+    db.session.commit()
+
+
+def get_hot():
+    url = "http://fund.eastmoney.com/api/FundTopicInterface.ashx?callbackname=fundData&sort=SYL_6Y&sorttype=desc&pageindex=1&pagesize=500&dt=11&tt=0&rs=WRANK"
+    try:
+        response = requests.get(url)
+    except:
+        return []
+
+    limit = 29
+    if response.status_code == 200:
+        text = response.text
+        pattern = '"Datas" : \[(.*?)\]'
+        data = re.findall(pattern, text)[0]
+        data = json.loads('[%s]' % data)
+        ans = []
+        for i in data:
+            name = i.split(',')[1]
+            rate = i.split(',')[2]
+            rate = round(float(rate), 2)
+
+            ans.append([name, rate])
+        return ans[:limit]
+    else:
+        return []
 
 
 def get_overall(code='1.000001'):

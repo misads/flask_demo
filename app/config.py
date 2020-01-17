@@ -42,7 +42,13 @@ class Config(object):
     http://flask-sqlalchemy.pocoo.org/2.1/config/#configuration-keys
     数据库URL mysql://用户名:密码@localhost:端口/数据库'
     '''
-    SQLALCHEMY_DATABASE_URI = 'mysql://root:123456@localhost:3306/flask'
+
+    if "MYSQL_ROOT_PASSWORD" in os.environ:
+        s = os.environ["MYSQL_ROOT_PASSWORD"]
+    else:
+        s = '123456'
+
+    SQLALCHEMY_DATABASE_URI = 'mysql://root:%s@localhost:3306/flask' % s
     '''
     SQLALCHEMY_TRACK_MODIFICATIONS is automatically disabled to suppress warnings and save memory. You should only enable
     this if you need it.

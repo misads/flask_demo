@@ -144,3 +144,31 @@ body {
     position:fixed;
     z-index:999;
 }
+
+/*hot*/
+.block {
+    float: left;
+    width: 125px;
+    height: 62px;
+    font-size: 15px;
+    border: 1px solid #fff;
+    box-sizing: border-box;
+    color: #fff; !important;
+    position: relative;
+    text-align: center;
+    /*background-color: #E3544D;*/
+    padding-top: 8px;
+    /*display: list-item;*/
+}
+
+.red-cell{
+    background-color: #E3544D;
+}
+
+.grey-cell{
+    background-color: #777777;
+}
+
+.green-cell{
+    background-color: #469530;
+}

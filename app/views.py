@@ -10,7 +10,7 @@ from app import utils
 from pyecharts import Scatter3D
 from pyecharts import Kline, Line
 
-from app.models import db, Data, Fund, Favourite, History
+from app.models import db, Fund, Favourite, History
 
 views = Blueprint('views', __name__)
 
@@ -32,12 +32,19 @@ def index():
         name, today, trend, rate = utils.get_overall(code)
         overall.append([name, today, trend, rate])
 
-    return render_template('index.html', overall=overall)
+    hot = utils.get_hot()
+    return render_template('index.html', overall=overall, hot=hot)
     # response = {'strangers': []}
     # s_q = Strangers.query.all()
     # for row in s_q:
     #     response['strangers'].append(row.time)
     # return jsonify(response)
+
+
+@views.route('/hot')
+def get_hot():
+    hot = utils.get_hot()
+    return jsonify(hot)
 
 
 @views.route('/test')
@@ -62,7 +69,8 @@ def test():
 @views.route('/update')
 def update():
     utils.updata_value()
-    return jsonify([])
+    utils.set_config('last_update', utils.get_time_stamp())
+    return jsonify(['ok'])
 
 
 @views.route('/query')
@@ -105,9 +113,11 @@ def favourite():
 
     chance = utils.get_chance()
     top = utils.get_top()
+    last_update = utils.get_last_update()
     # return jsonify(his_dict)
     return render_template('fund.html', url='/favourite', data=d_q, fav_list=fav_list,
-                           his_dict=his_dict, chance=chance, top=top, q=u'自选基金')
+                           his_dict=his_dict, chance=chance, top=top,
+                           last_update=last_update, q=u'自选基金')
 
 
 @views.route('/standing')
@@ -130,8 +140,9 @@ def standing():
         asc = False
 
     d_q = d_q.limit(200).all()
-
-    return render_template('fund.html', url='/standing', data=d_q, fav_list=fav_list, q=q, asc=asc)
+    last_update = utils.get_last_update()
+    return render_template('fund.html', url='/standing', data=d_q, fav_list=fav_list, q=q,
+                           last_update=last_update, asc=asc)
 
 
 @views.route('/fund')
@@ -153,7 +164,8 @@ def fund():
         d_q = d_q.limit(500).all()
     else:
         d_q = Fund.query.limit(500).all()
-    return render_template('fund.html', url='/fund', data=d_q, fav_list=fav_list, q=q)
+    last_update = utils.get_last_update()
+    return render_template('fund.html', url='/fund', data=d_q, fav_list=fav_list, last_update=last_update, q=q)
 
 
 # REMOTE_HOST = "https://pyecharts.github.io/assets/js/"
@@ -323,36 +335,6 @@ def unstar():
     db.session.delete(fav_q)
     db.session.commit()
     return jsonify(['succeed'])
-
-
-@views.route('/new')
-def new_detect():
-    requests = request.args
-    if 'name' not in requests or 'value' not in requests:
-        return jsonify([])
-
-    name = requests['name']
-    value = requests['value']
-    timestr = utils.get_time_str(utils.get_time_stamp())
-    name_q = Data.query.filter_by(name=name).first()
-    status = 'Add'
-    if name_q:
-        status = 'Update'
-        name_q.value = value
-        name_q.time = timestr
-        db.session.commit()
-    else:
-        new_data = Data(name, value, timestr)
-        db.session.add(new_data)
-        db.session.commit()
-    return jsonify([status, name, value, timestr])
-
-
-@views.route('/delete_all', methods=['GET'])
-def delete_all():
-    Data.query.delete()
-    db.session.commit()
-    return 'succeed'
 
 
 @views.route('/html/user/static/<path:path>')

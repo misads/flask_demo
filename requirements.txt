@@ -7,7 +7,7 @@ Flask-Script==2.0.6
 SQLAlchemy==1.2.2
 SQLAlchemy-Utils==0.32.21
 passlib==1.7.1
-six==1.11.0
+#six==1.11.0
 bcrypt
 itsdangerous==0.24
 requests==2.18.4
@@ -23,6 +23,6 @@ python-dotenv==0.8.2
 Flask-APScheduler==1.10.1
 PyYAML==3.13
 # MySQL-python==1.2.5  # Run apt-get install python-mysqldb
-pyecharts==0.5.11
+# pyecharts==0.5.11
 
 
