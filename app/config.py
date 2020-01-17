@@ -43,12 +43,17 @@ class Config(object):
     数据库URL mysql://用户名:密码@localhost:端口/数据库'
     '''
 
-    if "MYSQL_ROOT_PASSWORD" in os.environ:
-        s = os.environ["MYSQL_ROOT_PASSWORD"]
+    if "MYSQL_USERNAME" in os.environ:
+        username = os.environ["MYSQL_ROOT_PASSWORD"]
     else:
-        s = '123456'
+        username = 'root'
 
-    SQLALCHEMY_DATABASE_URI = 'mysql://root:%s@localhost:3306/flask' % s
+    if "MYSQL_ROOT_PASSWORD" in os.environ:
+        password = os.environ["MYSQL_ROOT_PASSWORD"]
+    else:
+        password = '123456'
+
+    SQLALCHEMY_DATABASE_URI = 'mysql://%s:%s@localhost:3306/flask' % (username, password)
     '''
     SQLALCHEMY_TRACK_MODIFICATIONS is automatically disabled to suppress warnings and save memory. You should only enable
     this if you need it.

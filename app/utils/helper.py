@@ -45,14 +45,15 @@ def set_config(key, value):
     db.session.commit()
 
 
-def get_hot():
-    url = "http://fund.eastmoney.com/api/FundTopicInterface.ashx?callbackname=fundData&sort=SYL_6Y&sorttype=desc&pageindex=1&pagesize=500&dt=11&tt=0&rs=WRANK"
+def get_hot(sort='6Y', limit=9999):
+
+    # D Y Z 6Y
+    url = "http://fund.eastmoney.com/api/FundTopicInterface.ashx?callbackname=fundData&sort=SYL_" + sort + "&sorttype=desc&pageindex=1&pagesize=500&dt=11&tt=0&rs=WRANK"
     try:
         response = requests.get(url)
     except:
         return []
 
-    limit = 29
     if response.status_code == 200:
         text = response.text
         pattern = '"Datas" : \[(.*?)\]'

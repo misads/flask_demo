@@ -146,19 +146,25 @@ body {
 }
 
 /*hot*/
-.block {
+.block{
     float: left;
     width: 125px;
     height: 62px;
-    font-size: 15px;
-    border: 1px solid #fff;
+
     box-sizing: border-box;
-    color: #fff; !important;
+
     position: relative;
-    text-align: center;
+
     /*background-color: #E3544D;*/
     padding-top: 8px;
     /*display: list-item;*/
+}
+
+.block-cell{
+    font-size: 15px;
+    border: 1px solid #fff;
+    color: #fff;
+    text-align: center;
 }
 
 .red-cell{
@@ -166,7 +172,8 @@ body {
 }
 
 .grey-cell{
-    background-color: #777777;
+    color: black; !important;
+    background-color: #EEEEEE;
 }
 
 .green-cell{

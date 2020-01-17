@@ -32,7 +32,7 @@ def index():
         name, today, trend, rate = utils.get_overall(code)
         overall.append([name, today, trend, rate])
 
-    hot = utils.get_hot()
+    hot = utils.get_hot(limit=29)
     return render_template('index.html', overall=overall, hot=hot)
     # response = {'strangers': []}
     # s_q = Strangers.query.all()
@@ -43,8 +43,12 @@ def index():
 
 @views.route('/hot')
 def get_hot():
-    hot = utils.get_hot()
-    return jsonify(hot)
+    ans = {}
+    tags = ['D', 'Z', 'Y', '3Y', '6Y', 'N']
+    for tag in tags:
+        hot = utils.get_hot(tag)
+        ans[tag] = hot
+    return render_template('hot.html', hot=ans, url='/hot')
 
 
 @views.route('/test')

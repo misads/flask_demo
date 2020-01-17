@@ -41,15 +41,26 @@
 	<div>
 		<ul class="nav navbar-nav">
 			<li {% if not url or url=="/" %}class="active"{% endif %}><a href="/">主页</a></li>
-			<li {% if url and url=="/all" %}class="active"{% endif %}><a href="/all">发现</a></li>
 
-            <li class="dropdown">
+            <li class="dropdown{% if url and (url=="/all" or url=='/hot') %} active{% endif %}">
+
+                    <a href="#" class="dropbtn nav-link">发现 <b class="caret"></b><span class="ico_down"></span></a>
+
+                    <div class="dropdown-content topmost">
+                        <a href="/hot">热门</a>
+                        <a href="/all">所有基金</a>
+
+                    </div>
+            </li>
+
+
+            <li class="dropdown{% if url and (url=="/fund" or url=='/standing') %} active{% endif %}">
 
 
                     <a href="#" class="dropbtn nav-link">市场 <b class="caret"></b><span class="ico_down"></span></a>
 
                     <div class="dropdown-content topmost">
-                        <a href="/fund?q=沪深300">搜索</a>
+                        <a id="search" href="javascript:void(0);">搜索</a>
                         <a href="/standing">排行</a>
 
                     </div>
@@ -223,7 +234,16 @@
 
 <!-- /scripts -->
 <script type="text/javascript">
+
+    const a=['沪深300', '电子', '娱乐', '信息', '医药', '银行', '证券', '上证50', '消费', '中小盘', '能源', '成长', '证券' ,'金融', '指数', '资源', '黄金'];
+
 $(function () {
+
+    $('#search').click(function () {
+        const i = Math.floor(Math.random()*a.length);
+        document.location.href = "/fund?q=" + a[i]
+    });
+
     {%if login %}
         $('#loginModal').modal('show');
         model_box = "login";
