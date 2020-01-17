@@ -35,7 +35,7 @@ A fund analysis & recommendation website.
 
 ## Docker Image
 
-We also provide a [Dockerfile](https://github.com/mingyuliutw/UNIT/blob/master/Dockerfile) for building an environment for running the code.
+We also provide a [Dockerfile](https://github.com/misads/flask_demo/blob/echarts/Dockerfile) for building an environment for running the code.
 
 ```bash
 docker build -t flask:v2 .  # 构建镜像

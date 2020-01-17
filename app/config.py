@@ -44,7 +44,7 @@ class Config(object):
     '''
 
     if "MYSQL_USERNAME" in os.environ:
-        username = os.environ["MYSQL_ROOT_PASSWORD"]
+        username = os.environ["MYSQL_USERNAME"]
     else:
         username = 'root'
 
