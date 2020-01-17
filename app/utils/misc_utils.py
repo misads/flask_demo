@@ -29,6 +29,12 @@ def color_print(text='', color=0):
     print('\033[0m')
 
 
+def get_local_time(timestamp):
+    time_local = time.localtime(timestamp)
+    dt = time.strftime("%Y/%m/%d", time_local)
+    return dt
+
+
 def get_time_stamp(add_offset=0):
     """Get time_zone+0 unix time stamp (seconds)
     Args:

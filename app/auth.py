@@ -123,4 +123,4 @@ def login():
 def logout():
     if utils.authed():
         session.clear()
-    return redirect('/')
+    return jsonify([])

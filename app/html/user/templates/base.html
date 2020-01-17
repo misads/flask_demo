@@ -23,6 +23,10 @@
     <script src="{{ request.script_root }}/html/user/static/js/jquery.min.js"></script>
     <script src="{{ request.script_root }}/html/user/static/js/bootstrap.min.js"></script>
 
+    {% for jsfile_name in script_list %}
+        <script src="{{ host }}/{{ jsfile_name }}.js"></script>
+    {% endfor %}
+
 </head>
 <body>
 {#<nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">#}
@@ -32,40 +36,27 @@
 <nav class="navbar navbar-default" role="navigation">
 	<div class="container">
 	<div class="navbar-header">
-		<a class="navbar-brand" href="/">Flask</a>
+		<a class="navbar-brand" href="/">Fundin</a>
 	</div>
 	<div>
 		<ul class="nav navbar-nav">
-			<li class="active"><a href="/">主页</a></li>
-			<li><a href="/query">Query</a></li>
-            <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                    Toggle
-                    <b class="caret"></b>
-                </a>
-                <ul class="dropdown-menu">
-                    <li><a href="#">jmeter</a></li>
-                    <li><a href="#">EJB</a></li>
-                    <li><a href="#">Jasper Report</a></li>
-                    <li class="divider"></li>
-                    <li><a href="#">分离的链接</a></li>
-                    <li class="divider"></li>
-                    <li><a href="#">另一个分离的链接</a></li>
-                </ul>
-            </li>
+			<li {% if not url or url=="/" %}class="active"{% endif %}><a href="/">主页</a></li>
+			<li {% if url and url=="/all" %}class="active"{% endif %}><a href="/all">发现</a></li>
+
             <li class="dropdown">
 
 
-                    <a href="#" class="dropbtn nav-link">Coding <b class="caret"></b><span class="ico_down"></span></a>
+                    <a href="#" class="dropbtn nav-link">市场 <b class="caret"></b><span class="ico_down"></span></a>
 
                     <div class="dropdown-content topmost">
-                        <a href="#">Leetcode</a>
-                        <a href="#">Python</a>
+                        <a href="/fund?q=沪深300">搜索</a>
+                        <a href="/standing">排行</a>
 
                     </div>
-
-
             </li>
+
+            <li {% if url and url=="/favourite" %}class="active"{% endif %}><a id="favourite" href="javascript:void(0);">自选</a></li>
+
 		</ul>
 
         <p class="navbar-text navbar-right">　　　</p>
@@ -84,7 +75,7 @@
                         <a href="#">我的主页</a>
                         <a href="#">积分</a>
                         <a href="#">设置</a>
-                        <a href="/logout">退出</a>
+                        <a id="logout" href="javascript:void(0);">退出</a>
 
                     </div>
 
@@ -105,7 +96,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <span style="font-size:20px;">Flask</span>
+                <span style="font-size:20px;">Fundin</span>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="display: inline"><span
                         aria-hidden="true">&times;</span></button>
             </div>
@@ -161,7 +152,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <span style="font-size:20px;">Flask</span>
+                <span style="font-size:20px;">Fundin</span>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="display: inline"><span
                         aria-hidden="true">&times;</span></button>
             </div>
@@ -238,9 +229,22 @@ $(function () {
         model_box = "login";
     {% endif %}
 
+    $("#favourite").click(function () {
+        {% if username %}
+            document.location.href = "/favourite";
+        {% else %}
+            model_box = "login";
+            $('#loginModal').modal('show') //显示模态框
+        {% endif %}
+    });
+
     $("#login").click(function () {
         model_box = "login";
         $('#loginModal').modal('show') //显示模态框
+    });
+
+    $("#logout").click(function () {
+        logout();
     });
 
     $("#register").click(function () {
@@ -313,6 +317,17 @@ function register(){
 
     });
 
+}
+
+function logout() {
+    $.get(script_root + '/logout', function (data) {
+        //document.location.href = "/team";
+        {% if url and url!='/favourite' %}
+            document.location.href = "{{ url }}";
+        {% else %}
+            document.location.href = "/";
+        {% endif %}
+    });
 }
 
 function login(){

@@ -109,3 +109,38 @@ body {
 .float-right{
     float: right;
 }
+
+/*color*/
+.red{
+    color: #EE0000 !important;
+}
+
+.green{
+    color: #008000 !important;
+}
+
+.yellow {
+   color: #f0ad4e !important;
+}
+
+.grey{
+    color: gray;
+}
+
+/*caret*/
+.up{
+    content: "";
+    border-top: 0;
+    border-bottom: 4px solid;
+}
+
+/*cursor*/
+.cursor-pointer {
+    cursor: pointer;
+}
+
+
+.topmost{
+    position:fixed;
+    z-index:999;
+}

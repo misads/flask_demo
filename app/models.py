@@ -11,6 +11,47 @@ app.config.from_object('app.config.Config')
 db = SQLAlchemy()  # type: SQLAlchemy
 
 
+class History(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    fid = db.Column(db.String(32), db.ForeignKey('fund.id'))
+    key = db.Column(db.String(128))
+    value = db.Column(db.String(32))
+    date = db.Column(db.String(32))
+
+    def __init__(self, fid, key, value):
+        self.fid = fid
+        self.key = key
+        self.value = value
+
+
+class Favourite(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    uid = db.Column(db.Integer, db.ForeignKey('users.id'))
+    fid = db.Column(db.String(32), db.ForeignKey('fund.id'))
+    group = db.Column(db.String(128))
+
+    def __init__(self, uid, fid):
+        self.uid = uid
+        self.fid = fid
+
+
+class Fund(db.Model):
+    id = db.Column(db.String(32), primary_key=True)
+    name = db.Column(db.String(128))
+    fee = db.Column(db.String(32))
+    value_today = db.Column(db.String(32))
+    value_yesterday = db.Column(db.String(32))
+    rate = db.Column(db.String(32))
+
+    def __init__(self, id, name, fee):
+        self.id = id
+        self.name = name
+        self.fee = fee
+
+    def __repr__(self):
+        return "<Pages route {0}>".format(self.route)
+
+
 class Data(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(32))
