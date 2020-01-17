@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block stylesheets %}
+
+{% endblock %}
+
+{% block content %}
+
+    <div class="jumbotron">
+        <div class="container">
+            <h3 class="q-awards">热门板块
+
+                <span class="create-team" role="button" data-toggle="tooltip" title="Create Award">
+				<a href="/admin/users">
+					<i class="btn-fa fas fa-plus-circle black"></i>
+				</a>
+			</span>
+            </h3>
+
+        </div>
+    </div>
+
+
+    <div class="container" style="margin-top: 40px; margin-bottom: 100px;">
+      <div class="col-md-12" >
+        <ul id="myTab" class="nav nav-tabs">
+            <li class="active">
+                <a href="#D" data-toggle="tab">日涨幅</a>
+            </li>
+            <li><a href="#Z" data-toggle="tab">近1周</a></li>
+            <li><a href="#Y" data-toggle="tab">近1月</a></li>
+            <li><a href="#3Y" data-toggle="tab">近3月</a></li>
+            <li><a href="#6Y" data-toggle="tab">近6月</a></li>
+            <li><a href="#N" data-toggle="tab">近1年</a></li>
+
+        </ul>
+
+        <div id="myTabContent" class="tab-content">
+            {% for tag in hot %}
+                <div class="tab-pane fade{{ ' in active' if tag=='D' else '' }}" id="{{ tag }}">
+                    <div style="display: block;">
+                      {% for i in hot[tag] %}
+
+                          {% if i[1] > 0 %}
+                              <div class="block block-cell red-cell">{{ i[0] }}<br/>{{ i[1] }}%</div>
+                          {% elif i[1] == 0 %}
+                              <div class="block block-cell grey-cell">{{ i[0] }}<br/>{{ i[1] }}%</div>
+                          {% else %}
+                              <div class="block block-cell green-cell">{{ i[0] }}<br/>{{ i[1] }}%</div>
+                          {% endif %}
+
+                      {% endfor %}
+                    </div>
+                </div>
+
+            {% endfor %}
+{#            <div class="tab-pane fade in active" id="home">#}
+{#                <div style="display: block;">#}
+{#                  {% for i in hot %}#}
+{#                      {% if i[1] > 0 %}#}
+{#                          <div class="block block-cell red-cell">{{ i[0] }}<br/>{{ i[1] }}%</div>#}
+{#                      {% elif i[1] == 0 %}#}
+{#                          <div class="block block-cell grey-cell">{{ i[0] }}<br/>{{ i[1] }}%</div>#}
+{#                      {% else %}#}
+{#                          <div class="block block-cell green-cell">{{ i[0] }}<br/>{{ i[1] }}%</div>#}
+{#                      {% endif %}#}
+{##}
+{#                  {% endfor %}#}
+{#                </div>#}
+{#            </div>#}
+        </div>
+      </div>
+    </div>
+
+{#    <div class="container" style="margin-bottom: 100px;">#}
+{#      <div class="col-md-12" >#}
+{#         <h3 style="margin-bottom: 10px;">热门板块</h3>#}
+{#          <div style="display: block;">#}
+{#              {% for i in hot %}#}
+{#                  {% if i[1] > 0 %}#}
+{#                      <div class="block block-cell red-cell">{{ i[0] }}<br/>{{ i[1] }}%</div>#}
+{#                  {% elif i[1] == 0 %}#}
+{#                      <div class="block block-cell grey-cell">{{ i[0] }}<br/>{{ i[1] }}%</div>#}
+{#                  {% else %}#}
+{#                      <div class="block block-cell green-cell">{{ i[0] }}<br/>{{ i[1] }}%</div>#}
+{#                  {% endif %}#}
+{##}
+{#              {% endfor %}#}
+{##}
+{#          </div>#}
+{#      </div>#}
+{#    </div>#}
+
+
+{% endblock %}
+
+{% block scripts %}
+    <script>
+
+    </script>
+{% endblock %}
