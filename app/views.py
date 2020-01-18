@@ -84,7 +84,7 @@ def query():
 
 
 @views.route('/all')
-def show_all():
+def view_all():
     d_q = Fund.query.limit(200).all()
     if utils.authed():
         uid = session['id']
@@ -92,7 +92,8 @@ def show_all():
         fav_list = [i.id for i in fav_q]
     else:
         fav_list = []
-    return render_template('fund.html', url='/all', data=d_q, fav_list=fav_list)
+    last_update = utils.get_last_update()
+    return render_template('fund.html', url='/all', data=d_q, last_update=last_update, fav_list=fav_list)
 
 
 @views.route('/favourite')

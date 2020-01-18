@@ -27,7 +27,7 @@ A fund analysis & recommendation website.
 
  2. Set MySql password.
 
- 3. Modify sqlalchemy database url in [app/config.py](https://github.com/misads/flask_dempo/echarts/app/config.py) :
+ 3. Modify sqlalchemy database url in [app/config.py](https://github.com/misads/flask_demo/blob/echarts/app/config.py) :
 
     ```python
     SQLALCHEMY_DATABASE_URI='mysql://root:your_root_password@localhost:3306/flask
