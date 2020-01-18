@@ -23,7 +23,7 @@ A fund analysis & recommendation website.
 
 ## Installation
 
- 1. Run `./prepare.sh` to install dependencies (for ubuntu).
+ 1. Run `./prepare.sh` to install dependencies (python2 for ubuntu).
 
  2. Set MySql password.
 

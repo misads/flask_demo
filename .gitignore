@@ -107,4 +107,5 @@ venv.bak/
 .ctfd_secret_key
 .idea/
 .DS_Store
-app/.DS_Store
+*/.DS_Store
+*/*/.DS_Store

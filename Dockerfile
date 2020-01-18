@@ -1,3 +1,4 @@
+# python2.7
 FROM mysql:5.7
 
 RUN rm -f /etc/apt/sources.list
