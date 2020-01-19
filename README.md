@@ -10,8 +10,10 @@ A fund analysis & recommendation website.
 ## Highlights
 
 - [x] Overall and individual fund pricing situation.
-- [x] Favoutite funds staring and history analysis.
-- [x] Trend track & Recommendation.
+- [x] Favorite funds staring and history analysis.
+- [x] Trend track & Trade recommendation.
+- [ ] Hot plate overview & details.
+- [ ] Daily updated up-to-time new fund.
 
 <img src="http://www.xyu.ink/wp-content/uploads/2020/01/feature1.png" style="zoom:80%;" alt="feature1" />
 
@@ -23,9 +25,9 @@ A fund analysis & recommendation website.
 
 ## Installation
 
- 1. Run `./prepare.sh` to install dependencies (python2 for ubuntu).
+ 1. Run `./prepare.sh` to install dependencies (for python2 in ubuntu).
 
- 2. Set MySql password.
+ 2. Set MySql root password.
 
  3. Modify sqlalchemy database url in [app/config.py](https://github.com/misads/flask_demo/blob/echarts/app/config.py) :
 
@@ -47,7 +49,7 @@ docker run -di -p 80:8000 -e MYSQL_ROOT_PASSWORD=123456 -v /Users/xhy/commits/fl
 docker exec -it d558fe /bin/bash  # 运行shell
 ```
 
-## Deploy
+## Deploying
 
 Run in debug mode:
 
