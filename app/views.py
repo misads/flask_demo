@@ -177,8 +177,13 @@ def fund():
 REMOTE_HOST = "/html/user/static/js/echarts"
 
 
+@views.route('/new')
+def get_new():
+    return jsonify(utils.get_new())
+
+
 @views.route('/chance')
-def get_change():
+def get_chance():
     if not utils.authed():
         return redirect('/login')
 

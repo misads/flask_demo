@@ -1,10 +1,13 @@
 # coding=utf-8
+import pdb
+
 from app.models import db, Users
 from flask import session
 from app.models import db, Fund, History, Favourite, Configs
 import requests
 from .misc_utils import *
 import json
+import random
 
 
 def authed():
@@ -150,7 +153,7 @@ def get_k_line(code):
 def updata_value():
     has = set()
     fund_list = get_fund_list()
-    for i in range(1, 42):
+    for i in range(1, 45):
         print(i)
         t = get_time_stamp() + '289'
         url = 'http://fund.eastmoney.com/Data/Fund_JJJZ_Data.aspx?t=1&lx=1&letter=&gsid=&text=&sort=zdf,desc&page=%d,200&dt=%s&atfc=&onlySale=0' % (
@@ -167,21 +170,58 @@ def updata_value():
             today = k[3]
             yesterday = k[5]
             rate = k[8]
+            canbuy = u'开放' in k[9] or u'限大额' in k[9]
+            fee = k[17]
+            if index not in has:
 
-            if index in fund_list and index not in has:
-                f_q = Fund.query.filter_by(id=index).first()
-                if f_q:
-                    f_q.value_today = today
-                    f_q.value_yesterday = yesterday
-                    f_q.rate = rate
+                if index in fund_list:
+                    f_q = Fund.query.filter_by(id=index).first()
+                    if f_q:
+                        f_q.value_today = today
+                        f_q.value_yesterday = yesterday
+                        f_q.rate = rate
 
-                has.add(index)
+                    has.add(index)
+                elif canbuy:
+                    new_fund = Fund(index, name, fee)
+
+                    new_fund.value_today = today
+                    new_fund.value_yesterday = yesterday
+                    new_fund.rate = rate
+                    db.session.add(new_fund)
+
+                    has.add(index)
 
                 # csv_writer.writerow(line)
 
         time.sleep(.1)
 
     db.session.commit()
+
+
+def get_new():
+    url = 'http://fund.eastmoney.com/data/FundNewIssue.aspx?t=zs&sort=jzrgq,desc&page=1,150&isbuy=2&v=' + str(random.random())
+
+    response = requests.get(url)
+    if response.status_code == 200:
+        text = response.text
+        # print(text)
+        pattern = 'datas:(\[\[.*?\]\])'
+        worth_list = re.findall(pattern, text)[0]
+
+        worth_list = json.loads('%s' % worth_list)
+        ans = []
+        for i in worth_list:
+            s = i[5].split(u'～')
+            # if s[0][:5] == s[1][:5] and u'债券' not in i[4]:
+            #     ans.append(i)
+            if s[0] == s[1]:
+                ans.append(i)
+
+        return ans
+
+    else:
+        return []
 
 
 def get_chance():
