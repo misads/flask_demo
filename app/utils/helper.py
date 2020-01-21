@@ -71,8 +71,7 @@ def send_sms(phone, captcha):
 
     response = client.do_action(request)
     # python2:  print(response)
-    print(str(response, encoding='utf-8'))
-    return str(response, encoding='utf-8')
+    return str(response)
 
 
 def get_hot(sort='6Y', limit=9999):

@@ -1,3 +1,4 @@
+# encoding=utf-8
 import os
 
 from flask import current_app as app, Blueprint, jsonify, render_template, abort, send_file, session, request, redirect

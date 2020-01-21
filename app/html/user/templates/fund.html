@@ -110,7 +110,19 @@
                                         <a href="/detail?id={{ d.id }}">{{ d.name }}</a>
                                         [<a href="#detail_{{ d.id }}">数据分析</a>]
                                         {% if chance and d.id in chance %}
-                                            <i class="glyphicon glyphicon-flash yellow cursor-pointer" data-toggle="tooltip" title="存在买入时机"></i>
+                                            {% if chance[d.id] < -10 %}
+                                                <i class="glyphicon glyphicon-flash yellow cursor-pointer" data-toggle="tooltip" title="存在买入时机"></i>
+                                                <i class="glyphicon glyphicon-flash yellow cursor-pointer" data-toggle="tooltip" title="存在买入时机"></i>
+                                                <i class="glyphicon glyphicon-flash yellow cursor-pointer" data-toggle="tooltip" title="存在买入时机"></i>
+                                            {% elif chance[d.id] < -5 %}
+                                                <i class="glyphicon glyphicon-flash yellow cursor-pointer" data-toggle="tooltip" title="存在买入时机"></i>
+                                                <i class="glyphicon glyphicon-flash yellow cursor-pointer" data-toggle="tooltip" title="存在买入时机"></i>
+                                            {% else %}
+                                                <i class="glyphicon glyphicon-flash yellow cursor-pointer" data-toggle="tooltip" title="存在买入时机"></i>
+                                            {% endif %}
+
+
+
                                         {% endif %}
                                         {% if top and d.id in top %}
                                             <i class="glyphicon glyphicon-flag red cursor-pointer" data-toggle="tooltip" title="高点"></i>
