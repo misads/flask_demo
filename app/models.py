@@ -52,6 +52,22 @@ class Fund(db.Model):
         return "<Pages route {0}>".format(self.route)
 
 
+class Cache(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(128))
+    value = db.Column(db.String(128))
+    time_stamp = db.Column(db.String(32))
+    comment = db.Column(db.String(128))
+
+    def __init__(self, key, value, time_stamp):
+        self.key = key
+        self.value = value
+        self.time_stamp = time_stamp
+
+    def __repr__(self):
+        return "<Pages route {0}>".format(self.route)
+
+
 class Configs(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(32))
@@ -69,7 +85,7 @@ class Configs(db.Model):
 class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128), unique=True)
-    email = db.Column(db.String(128), unique=True)
+    phone = db.Column(db.String(128), unique=True)
     password = db.Column(db.String(128))
     website = db.Column(db.String(128))
     nickname = db.Column(db.String(128))
@@ -81,9 +97,9 @@ class Users(db.Model):
     admin = db.Column(db.Boolean, default=False)
     join_time = db.Column(db.String(32), default=get_time_stamp())
 
-    def __init__(self, name, email, password):
+    def __init__(self, name, phone, password):
         self.name = name
-        self.email = email
+        self.phone = phone
         self.password = bcrypt_sha256.encrypt(str(password))
 
     def __repr__(self):

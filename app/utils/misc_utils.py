@@ -7,6 +7,10 @@ def check_email_format(email):
     return bool(re.match(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", email))
 
 
+def check_phone_format(phone):
+    return bool(re.match(r"(^[1][3,4,5,7,8][0-9]{9}$)", phone))
+
+
 def color_print(text='', color=0):
     """Print colored text.
     Args:

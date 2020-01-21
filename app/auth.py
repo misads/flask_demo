@@ -2,22 +2,59 @@ import os
 
 from flask import current_app as app, Blueprint, jsonify, render_template, abort, send_file, session, request, redirect
 from app import utils
-from app.models import db, Users
+from app.models import db, Users, Cache
 from passlib.hash import bcrypt_sha256
+from app.utils import ratelimit
+import random
 
 auth = Blueprint('auth', __name__)
+
+
+@auth.route('/send_sms', methods=['POST'])
+@ratelimit(method="POST", limit=1, interval=60)
+def send_sms():
+    phone = request.form['phone']
+
+    if not phone or not utils.check_phone_format(phone):
+        return jsonify(['invalid phone'])
+
+    captcha = ''
+    for i in range(6):
+        captcha += str(random.randint(0, 9))
+    # captcha = '412313'
+    user_q = Users.query.filter_by(phone=phone).first()
+    if user_q:
+        return jsonify(['这个手机号已经被注册了。'])
+
+    timestamp = utils.get_time_stamp()
+    captcha_q = Cache.query.filter_by(key=phone).first()
+    if captcha_q:
+        captcha_q.value = captcha
+        captcha_q.time_stamp = timestamp
+    else:
+        new_cache = Cache(phone, captcha, timestamp)
+        new_cache.comment = 'captcha'
+        db.session.add(new_cache)
+    db.session.commit()
+    utils.send_sms(phone, captcha)
+
+    return jsonify([])
 
 
 @auth.route('/register', methods=['POST'])
 def register():
     username = request.form['username']
-    email = request.form['email']
+    phone = request.form['phone']
+    captcha = request.form['captcha']
     password = request.form['password']
+
     errors = []
     if not username:
         errors.append('Username can not be empty.')
-    if not email:
-        errors.append('Email can not be empty.')
+    if not phone:
+        errors.append('Phone can not be empty.')
+    if not captcha:
+        errors.append('Captcha can not be empty.')
     if not password:
         errors.append('Password can not be empty.')
 
@@ -25,7 +62,7 @@ def register():
         return jsonify(errors)
 
     username = username.strip()
-    email = email.strip()
+    phone = phone.strip()
 
     forbidden_list = ['admin', 'root', 'system', 'username', 'name', 'team', 'user']
 
@@ -33,10 +70,10 @@ def register():
     name_empty = len(username) == 0
     name_too_long = len(username) > 16
     invalid_name = username in forbidden_list
-    invalid_email = not utils.check_email_format(email)
-    invalid_username = utils.check_email_format(username)
+    invalid_phone = not utils.check_phone_format(phone)
+    invalid_username = utils.check_phone_format(username)
     username_existed = Users.query.add_columns('name', 'id').filter_by(name=username).first()
-    email_existed = Users.query.add_columns('email', 'id').filter_by(email=email).first()
+    phone_existed = Users.query.add_columns('phone', 'id').filter_by(phone=phone).first()
     pass_too_short = 0 < len(password) < 5
     pass_too_long = len(password) > 128
 
@@ -46,10 +83,10 @@ def register():
         'Username can not be empty.': name_empty,
         'Username can not be longer than 16 characters.': name_too_long,
         'Illegal username.': invalid_name,
-        'Username can not be an email format.': invalid_username,
-        'Invalid email.': invalid_email,
+        'Username can not be phone format.': invalid_username,
+        'Invalid phone.': invalid_phone,
         'Username has been taken.': username_existed,
-        'Email has been taken.': email_existed,
+        'This phone number has been registered.': phone_existed,
         'Password can not be shorter than 5 characters.': pass_too_short,
         'Password can not be longer than 128 characters.': pass_too_long,
     }
@@ -60,8 +97,16 @@ def register():
     if len(errors) > 0:
         return jsonify(errors)
 
+    c_q = Cache.query.filter_by(key=phone, comment='captcha').first()
+    if not c_q or c_q.value != captcha:
+        return jsonify(['短信验证码错误'])
+    timestamp = utils.get_time_stamp()
+
+    if int(timestamp) - int(c_q.time_stamp) > 600:
+        return jsonify(['短信验证码超时，请重新获取'])
+
     with app.app_context():
-        user = Users(username, email.lower(), password)
+        user = Users(username, phone, password)
         db.session.add(user)
         db.session.commit()
         db.session.flush()
@@ -94,8 +139,8 @@ def login():
     if len(errors) > 0:
         return jsonify(errors)
 
-    if utils.check_email_format(username) is True:
-        user = Users.query.filter_by(email=username).first()
+    if utils.check_phone_format(username) is True:
+        user = Users.query.filter_by(phone=username).first()
     else:
         user = Users.query.filter_by(name=username).first()
 

@@ -8,6 +8,7 @@ import requests
 from .misc_utils import *
 import json
 import random
+from .aliapi import AccessKeyId, AccessKeySecret
 
 
 def authed():
@@ -42,10 +43,36 @@ def set_config(key, value):
     if c_q:
         c_q.value = value
     else:
-        new_config = Configs(name=key,value=value)
+        new_config = Configs(name=key, value=value)
         db.session.add(new_config)
 
     db.session.commit()
+
+
+def send_sms(phone, captcha):
+    from aliyunsdkcore.client import AcsClient
+    from aliyunsdkcore.request import CommonRequest
+
+    client = AcsClient(AccessKeyId, AccessKeySecret, 'cn-hangzhou')
+
+    request = CommonRequest()
+    request.set_accept_format('json')
+    request.set_domain('dysmsapi.aliyuncs.com')
+    request.set_method('POST')
+    request.set_protocol_type('https')  # https | http
+    request.set_version('2017-05-25')
+    request.set_action_name('SendSms')
+
+    request.add_query_param('RegionId', "cn-hangzhou")
+    request.add_query_param('PhoneNumbers', phone)
+    request.add_query_param('SignName', "Fundin")
+    request.add_query_param('TemplateCode', "SMS_182668433")
+    request.add_query_param('TemplateParam', '{"code":"%s"}' % captcha)
+
+    response = client.do_action(request)
+    # python2:  print(response)
+    print(str(response, encoding='utf-8'))
+    return str(response, encoding='utf-8')
 
 
 def get_hot(sort='6Y', limit=9999):

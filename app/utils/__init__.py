@@ -1,8 +1,9 @@
 import os
 import hashlib
-from flask import current_app as app, request, redirect, url_for, session, render_template, abort, jsonify
+from flask import request, redirect, url_for, session, render_template, abort, jsonify
 from .misc_utils import *
 from .helper import *
+from .decorators import *
 
 
 def sha512(string):
@@ -33,3 +34,8 @@ def init_utils(app):
     @app.before_request
     def disable_jinja_cache():
         app.jinja_env.cache = {}
+
+
+
+
+
