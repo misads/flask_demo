@@ -3,7 +3,7 @@ import pdb
 
 from app.models import db, Users
 from flask import session
-from app.models import db, Fund, History, Favourite, Configs
+from app.models import db, Fund, History, Favourite, Configs, Theme
 import requests
 from .misc_utils import *
 import json
@@ -74,10 +74,50 @@ def send_sms(phone, captcha):
     return str(response)
 
 
-def get_hot(sort='6Y', limit=9999):
+def update_hot():
+    url = "http://fund.eastmoney.com/api/FundTopicInterface.ashx?callbackname=fundData&sort=SYL_" + 'D' + \
+          "&sorttype=desc&pageindex=1&pagesize=500&dt=11&tt=0&rs=WRANK"
 
+    try:
+        response = requests.get(url)
+    except:
+        return ['failed']
+
+    if response.status_code == 200:
+        text = response.text
+
+        pattern = '"Datas" : \[(.*?)\]'
+        data = re.findall(pattern, text)[0]
+        data = json.loads('[%s]' % data)
+        for i in data:
+            link = i.split(',')[0]
+            name = i.split(',')[1]
+            t_q = Theme.query.filter_by(name=name).first()
+            if t_q:
+                t_q.link = link
+            else:
+                new_theme = Theme(name=name, link=link)
+                db.session.add(new_theme)
+
+        db.session.commit()
+
+        return ['ok']
+    else:
+        return ['failed']
+
+
+def get_hot(sort='6Y', limit=9999, area='all'):
+
+    dic = {
+        'all': 0,
+        'overall': 1,
+        'industry': 2,
+        'concept': 3,
+        'district': 4
+    }
     # D Y Z 6Y
-    url = "http://fund.eastmoney.com/api/FundTopicInterface.ashx?callbackname=fundData&sort=SYL_" + sort + "&sorttype=desc&pageindex=1&pagesize=500&dt=11&tt=0&rs=WRANK"
+    url = "http://fund.eastmoney.com/api/FundTopicInterface.ashx?callbackname=fundData&sort=SYL_" + sort + \
+          "&sorttype=desc&pageindex=1&pagesize=500&dt=11&tt=%d&rs=WRANK" % dic[area]
     try:
         response = requests.get(url)
     except:
@@ -98,6 +138,33 @@ def get_hot(sort='6Y', limit=9999):
         return ans[:limit]
     else:
         return []
+
+
+def get_theme(link):
+    url = 'http://fund.eastmoney.com/api/FundTopicInterface.ashx?callbackname=topicFundData&sort=SYL_6Y' +\
+    '&sorttype=DESC&ft=&pageindex=1&pagesize=100&dt=10&tp=%s&isbuy=1' % link
+
+    try:
+        response = requests.get(url)
+    except:
+        return []
+
+    if response.status_code == 200:
+        text = response.text
+        pattern = '"Datas":\[(.*?)\]'
+        data = re.findall(pattern, text)[0]
+        data = json.loads('[%s]' % data)
+        ans = []
+        for i in data:
+            name = i['SHORTNAME']
+            code = i['FCODE']
+
+            ans.append(code)
+        return ans
+    else:
+        return []
+
+
 
 
 def get_overall(code='1.000001'):

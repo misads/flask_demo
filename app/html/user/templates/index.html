@@ -10,15 +10,17 @@
   </div>
   <div class="container">
       <div class="col-md-12" >
-         <h3 style="margin-bottom: 10px;">热门板块</h3>
+         <h3 style="margin-bottom: 10px;">行业板块</h3>
           <div style="display: block;">
               {% for i in hot %}
                   {% if i[1] > 0 %}
-                      <div class="block block-cell red-cell">{{ i[0] }}<br/>{{ i[1] }}%</div>
+                      <div class="block block-cell red-cell" onMouseOver="this.style.backgroundColor='#E97671';"
+                           onMouseOut="this.style.backgroundColor='#E3544D';" onclick="goto('/fund?q={{ i[0] }}');">{{ i[0] }}<br/>{{ i[1] }}%</div>
                   {% elif i[1] == 0 %}
-                      <div class="block block-cell grey-cell">{{ i[0] }}<br/>{{ i[1] }}%</div>
+                      <div class="block block-cell grey-cell" onclick="goto('/fund?q={{ i[0] }}');">{{ i[0] }}<br/>{{ i[1] }}%</div>
                   {% else %}
-                      <div class="block block-cell green-cell">{{ i[0] }}<br/>{{ i[1] }}%</div>
+                      <div class="block block-cell green-cell" onMouseOver="this.style.backgroundColor='#6BAA59';"
+                           onMouseOut="this.style.backgroundColor='#469530';" onclick="goto('/fund?q={{ i[0] }}');">{{ i[0] }}<br/>{{ i[1] }}%</div>
                   {% endif %}
 
               {% endfor %}

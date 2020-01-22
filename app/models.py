@@ -11,6 +11,16 @@ app.config.from_object('app.config.Config')
 db = SQLAlchemy()  # type: SQLAlchemy
 
 
+class Theme(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128))
+    link = db.Column(db.String(128))
+
+    def __init__(self, name, link):
+        self.name = name
+        self.link = link
+
+
 class History(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     fid = db.Column(db.String(32), db.ForeignKey('fund.id'))

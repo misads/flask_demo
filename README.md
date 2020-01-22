@@ -12,7 +12,7 @@ A fund analysis & recommendation website.
 - [x] Overall and individual fund pricing situation.
 - [x] Favorite funds staring and history analysis.
 - [x] Trend track & Trade recommendation.
-- [ ] Hot plate overview & details.
+- [x] Hot plate overview & details.
 - [ ] Daily updated up-to-time new fund.
 
 <img src="http://www.xyu.ink/wp-content/uploads/2020/01/feature1.png" style="zoom:80%;" alt="feature1" />

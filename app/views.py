@@ -10,7 +10,7 @@ from app import utils
 from pyecharts import Scatter3D
 from pyecharts import Kline, Line
 
-from app.models import db, Fund, Favourite, History
+from app.models import db, Fund, Favourite, History, Theme
 
 views = Blueprint('views', __name__)
 
@@ -32,7 +32,7 @@ def index():
         name, today, trend, rate = utils.get_overall(code)
         overall.append([name, today, trend, rate])
 
-    hot = utils.get_hot(limit=29)
+    hot = utils.get_hot('D', limit=99999, area='industry')  # 29
     return render_template('index.html', overall=overall, hot=hot)
     # response = {'strangers': []}
     # s_q = Strangers.query.all()
@@ -74,6 +74,13 @@ def test():
 def update():
     utils.updata_value()
     utils.set_config('last_update', utils.get_time_stamp())
+    return jsonify(['ok'])
+
+
+@views.route('/update_hot')
+def update_hot():
+    utils.update_hot()
+    utils.set_config('last_update_hot', utils.get_time_stamp())
     return jsonify(['ok'])
 
 
@@ -161,7 +168,11 @@ def fund():
 
     q = request.args.get('q')
     if q:
-        if len(q) == 6 and q.isdigit():
+        theme_q = Theme.query.filter_by(name=q).first()
+        if theme_q:
+            theme = utils.get_theme(theme_q.link)
+            d_q = db.session.query(Fund).filter(Fund.id.in_(theme))
+        elif len(q) == 6 and q.isdigit():
             d_q = db.session.query(Fund).filter(Fund.id == q)
         else:
             d_q = db.session.query(Fund).filter(Fund.name.like('%' + q + '%'))

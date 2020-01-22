@@ -161,6 +161,7 @@ body {
 }
 
 .block-cell{
+    cursor: pointer;
     font-size: 15px;
     border: 1px solid #fff;
     color: #fff;
