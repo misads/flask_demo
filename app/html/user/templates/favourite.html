@@ -1,0 +1,485 @@
+{% extends "base.html" %}
+
+{% block stylesheets %}
+
+{% endblock %}
+
+{% block content %}
+
+<div class="modal fade" id="inputModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span style="font-size:20px;">修改分组</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="display: inline"><span
+                        aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+
+                <h4 class="modal-title" id="input_title">修改分组</h4>
+                <br/>
+{#                col-sm-offset-2 col-sm-8" style="margin-top: 40px;"#}
+                <div class="site-login" style="margin-left:20%; width: 60%;">
+{#                    <form id="login-form" class="form-signin" style="margin-left:20%; width: 60%;" action="/login" method="post">#}
+                        <div class="showerror">
+
+                        </div>
+                        <input type="hidden" name="nonce"
+                               value="{{ nonce }}">
+                        <input type="hidden" id="group_fid" name="group_fid"
+                               value="">
+                        <div class="form-group field-loginform-username required">
+                            <div class="input-group"><span class="input-group-addon"><i
+                                    class="glyphicon glyphicon-tags"></i></span><input
+                                    type="text" id="group_name" class="form-control" name="group_name"
+                                    placeholder="分组名" aria-required="true"></div>
+                            <p class="help-block help-block-error"></p>
+                        </div>
+                        <div class="form-group">
+                            <a class="btn btn-primary" name="group-button" onclick="change_group();">修改</a></div>
+
+{#                    </form>#}
+                </div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- 模态框（Modal） -->
+    <div class="modal fade" id="info" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"
+                            aria-hidden="true">×
+                    </button>
+                    <h4 id="modal_title">
+
+                    </h4>
+                </div>
+                <div id="modal_body" class="modal-body">
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default"
+                            data-dismiss="modal">关闭
+                    </button>
+                    <button type="button" class="btn btn-primary"
+                        data-dismiss="modal">
+                        确定
+                    </button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <div class="jumbotron">
+        <div class="container">
+            <h3 class="q-awards">'{{ q if q else '所有基金' }}' 的搜索结果
+
+                <span class="create-team" role="button" data-toggle="tooltip" title="Create Award">
+				<a href="/admin/users">
+					<i class="btn-fa fas fa-plus-circle black"></i>
+				</a>
+			</span>
+            </h3>
+
+        </div>
+    </div>
+    <div class="container">
+        {% if url == '/fund' %}
+            <div class="col-md-7">
+                <form method="GET" class="form-inline">
+                    <div class="form-group col-md-5" style="margin-left: 30px;">
+                        <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-leaf"></i></span>
+                            <input type="text" class="form-control" id="team-name-search" name="q" placeholder="输入基金名称或代码" {% if q %}value="{{q}}"{% endif %}>
+                        </div>
+                    </div>
+
+                        <button type="submit" class="btn btn-primary" style="margin-left: 5px;"><span><i class="glyphicon glyphicon-search"></i></span></button>
+
+                    </form>
+            </div>
+        {% endif %}
+    </div>
+    {% if data %}
+    <div class="container">
+        <ul id="myTab" class="nav nav-tabs">
+
+            {% for fav_type in fav_dict %}
+            <li{{ ' class="active"'| safe if fav_type==tag else '' }}><a href="#{{ fav_type }}" data-toggle="tab" onclick="default_tag='{{ fav_type }}';">{{ fav_type }}</a></li>
+            {% endfor %}
+        </ul>
+
+        <div class="tab-content">
+            {% for fav_type in fav_dict %}
+            <div class="tab-pane fade{{ ' in active' if fav_type==tag else '' }}" id="{{ fav_type }}">
+                <div class="row">
+                    <div class="col-md-9">
+
+
+                        <table class="table table-striped table-bordered" style="margin-bottom:0px;">
+                            <colgroup>
+                                <col width="50px">
+                                <col>
+                                <col width="90px">
+                                <col width="90px">
+                                <col width="70px">
+                                <col width="90px">
+                                <col width="70px">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>名称</th>
+                                    <th style="text-align: center;">昨日净值</th>
+                                    <th style="text-align: center;">今日净值</th>
+                                    <th style="text-align: center;">
+                                        {% if url=='/standing' %}
+                                            {% if asc %}
+                                                <a href="/standing">涨跌 <b class="caret up"></b></a>
+                                            {% else %}
+                                                <a href="/standing?asc=1">涨跌 <b class="caret"></b></a>
+                                            {% endif %}
+                                        {% else %}
+                                            涨跌
+                                        {% endif %}
+
+                                    </th>
+                                    <th style="text-align: center;">买入费率</th>
+                                    <th style="text-align: center;">加自选</th>
+
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for d in data %}
+                                    {% if d.id in fav_dict[fav_type] %}
+                                    <tr>
+                                        <td><a href="#detail_{{ d.id }}">{{ d.id }}</a></td>
+                                        <td>
+                                            {% if his_dict and his_dict[d.id] %}
+                                                <a href="/detail?id={{ d.id }}">{{ d.name }}</a>
+                                                <i class="glyphicon glyphicon-edit cursor-pointer" data-toggle="tooltip" title="编辑分组" onclick="show_input('{{ d.name }}', '{{ d.id }}')"></i>
+                                                [<a href="#detail_{{ d.id }}">数据分析</a>]
+                                                {% if chance and d.id in chance %}
+                                                    {% if chance[d.id] < -10 %}
+                                                        <i class="glyphicon glyphicon-flash yellow cursor-pointer" data-toggle="tooltip" title="存在买入时机"></i>
+                                                        <i class="glyphicon glyphicon-flash yellow cursor-pointer" data-toggle="tooltip" title="存在买入时机"></i>
+                                                        <i class="glyphicon glyphicon-flash yellow cursor-pointer" data-toggle="tooltip" title="存在买入时机"></i>
+                                                    {% elif chance[d.id] < -5 %}
+                                                        <i class="glyphicon glyphicon-flash yellow cursor-pointer" data-toggle="tooltip" title="存在买入时机"></i>
+                                                        <i class="glyphicon glyphicon-flash yellow cursor-pointer" data-toggle="tooltip" title="存在买入时机"></i>
+                                                    {% else %}
+                                                        <i class="glyphicon glyphicon-flash yellow cursor-pointer" data-toggle="tooltip" title="存在买入时机"></i>
+                                                    {% endif %}
+
+
+
+                                                {% endif %}
+                                                {% if top and d.id in top %}
+                                                    <i class="glyphicon glyphicon-flag red cursor-pointer" data-toggle="tooltip" title="高点"></i>
+                                                {% endif %}
+
+                                            {% else %}
+                                                <a href="/detail?id={{ d.id }}">{{ d.name }}</a>
+                                                <i class="glyphicon glyphicon-edit cursor-pointer" data-toggle="tooltip" title="编辑分组" onclick="show_input('{{ d.name }}', '{{ d.id }}')"></i>
+
+                                            {% endif %}
+
+                                        </td>
+                                        <td style="text-align: center;">{{ d.value_yesterday if d.value_yesterday else '-'}}</td>
+                                        <td style="text-align: center;">
+                                            {% if d.value_today  %}
+                                                {% if d.rate %}
+                                                    {% if '-' in d.rate %}
+                                                        <span class="green">{{ d.value_today }}</span>
+                                                    {% elif d.rate=='0.00' %}
+                                                        <span class="grey">{{ d.value_today }}</span>
+                                                    {% else %}
+                                                        <span class="red">{{ d.value_today }}</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    {{ d.value_today }}
+                                                {% endif %}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td style="text-align: center;">
+                                            {% if d.rate %}
+                                                {% if '-' in d.rate %}
+                                                    <span class="green">{{ d.rate }}%</span>
+                                                {% elif d.rate=='0.00' %}
+                                                    <span class="grey">{{ d.rate }}%</span>
+                                                {% else %}
+                                                    <span class="red">{{ d.rate }}%</span>
+                                                {% endif %}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+
+                                        </td>
+                                        <td style="text-align: center;">{{ d.fee }}</td>
+                                        <td id="star_{{ d.id }}" style="text-align: center;">
+                                                <!--加自选 -->
+                                                <a href="javascript:void(0);" onclick="unstar('{{ d.id }}')"><i class="glyphicon glyphicon-star yellow"></i></a>
+
+                                            </td>
+
+                                    </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <p class="text-muted wy-text-small" style="font-size:10px;margin-top: 5px;">最后更新: {{ last_update if last_update else 'None'}}</p>
+                    </div>
+
+                </div>
+
+
+                {% if his_dict %}
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-striped table-bordered">
+                            <caption>数据分析</caption>
+                            <colgroup>
+                                <col width="90px">
+                                <col>
+                                <col width="90px">
+                                <col width="90px">
+                                <col width="90px">
+
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style="text-align: center;">#</th>
+                                    <th style="text-align: center;">名称</th>
+                                    <th style="text-align: center;">净值</th>
+                                    <th style="text-align: center;">
+                                        {% if url=='/standing' %}
+                                            {% if asc %}
+                                                <a href="/standing">涨跌 <b class="caret up"></b></a>
+                                            {% else %}
+                                                <a href="/standing?asc=1">涨跌 <b class="caret"></b></a>
+                                            {% endif %}
+                                        {% else %}
+                                            涨跌
+                                        {% endif %}
+
+                                    </th>
+                                    <th style="text-align: center;">买入费率</th>
+
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for d in data %}
+                                    {% if d.id in fav_dict[fav_type] %}
+                                    <tr>
+                                        <td id="detail_{{ d.id }}" style="text-align: center;">{{ d.id }}</td>
+                                        <td style="text-align: center;"><a href="/detail?id={{ d.id }}"><strong>{{ d.name }}</strong></a></td>
+                                        <td style="text-align: center;">
+                                            {% if d.value_today  %}
+                                                {% if d.rate %}
+                                                    {% if '-' in d.rate %}
+                                                        <span class="green">{{ d.value_today }}</span>
+                                                    {% elif d.rate=='0.00' %}
+                                                        <span class="grey">{{ d.value_today }}</span>
+                                                    {% else %}
+                                                        <span class="red">{{ d.value_today }}</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    {{ d.value_today }}
+                                                {% endif %}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td style="text-align: center;">
+                                            {% if d.rate %}
+                                                {% if '-' in d.rate %}
+                                                    <span class="green">{{ d.rate }}%</span>
+                                                {% elif d.rate=='0.00' %}
+                                                    <span class="grey">{{ d.rate }}%</span>
+                                                {% else %}
+                                                    <span class="red">{{ d.rate }}%</span>
+                                                {% endif %}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+
+                                        </td>
+                                        <td style="text-align: center;">{{ d.fee }}</td>
+
+                                    </tr>
+                                    {% endif %}
+                                    {% if his_dict[d.id] and d.id in fav_dict[fav_type] %}
+
+                                        {% for i in range(15) %}
+                                            <tr>
+                                                <td></td>
+                                                <td style="text-align: center;">{{ his_dict[d.id]['value_' ~ i][1]}}</td> <!--日期-->
+                                                <td style="text-align: center;">
+                                                    {% if '-' in his_dict[d.id]['rate_' ~ i][0] %}
+                                                        <span class="green">{{ his_dict[d.id]['value_' ~ i][0]}}</span>
+                                                    {% elif his_dict[d.id]['rate_' ~ i][0]=='0' %}
+                                                        <span class="grey">{{ his_dict[d.id]['value_' ~ i][0]}}</span>
+                                                    {% else %}
+                                                        <span class="red">{{ his_dict[d.id]['value_' ~ i][0]}}</span>
+                                                    {% endif %}
+
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    {% if '-' in his_dict[d.id]['rate_' ~ i][0] %}
+                                                        <span class="green">{{ his_dict[d.id]['rate_' ~ i][0]}}%</span>
+                                                    {% elif his_dict[d.id]['rate_' ~ i][0]=='0' %}
+                                                        <span class="grey">{{ his_dict[d.id]['rate_' ~ i][0]}}%</span>
+                                                    {% else %}
+                                                        <span class="red">{{ his_dict[d.id]['rate_' ~ i][0]}}%</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td><a href="/detail?id={{ d.id }}"></a></td>
+                                            </tr>
+                                        {% endfor %}
+                                        <tr><td>　</td><td></td><td></td><td></td></tr>
+                                        {% for i in [7, 30, 60, 90, 365] %}
+                                            <tr>
+                                                <td></td>
+                                                <td style="text-align: center;">昨日相比{{ i }}日最高</td>
+                                                <td style="text-align: center;">
+                                                    {% if '-' in his_dict[d.id]['max_' ~ i][0] %}
+                                                        <span class="green">{{ his_dict[d.id]['max_' ~ i][0]}}%</span>
+                                                    {% elif his_dict[d.id]['max_' ~ i][0]=='0' %}
+                                                        <span class="grey">{{ his_dict[d.id]['max_' ~ i][0]}}%</span>
+                                                    {% else %}
+                                                        <span class="red">{{ his_dict[d.id]['max_' ~ i][0]}}%</span>
+                                                    {% endif %}
+
+                                                </td>
+                                                <td></td>
+                                                <td></td>
+                                            </tr>
+                                            <tr>
+                                                <td></td>
+                                                <td style="text-align: center;">昨日相比{{ i }}日最低</td>
+                                                <td style="text-align: center;">
+                                                    {% if '-' in his_dict[d.id]['min_' ~ i][0] %}
+                                                        <span class="green">{{ his_dict[d.id]['min_' ~ i][0]}}%</span>
+                                                    {% elif his_dict[d.id]['min_' ~ i][0]=='0' %}
+                                                        <span class="grey">{{ his_dict[d.id]['min_' ~ i][0]}}%</span>
+                                                    {% else %}
+                                                        <span class="red">{{ his_dict[d.id]['min_' ~ i][0]}}%</span>
+                                                    {% endif %}
+
+                                                </td>
+                                                <td></td>
+                                                <td></td>
+                                            </tr>
+
+                                        {% endfor %}
+
+                                        <tr><td>　</td><td></td><td></td><td></td><td></td></tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+        <div class="container">
+            <p><br/>没有可以显示的结果，去<a href="/all">基金市场</a>看看</p>
+        </div>
+    {% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+    <script>
+    var default_tag = '{{ tag if tag else '' }}';
+
+    function show_input(title, fid, type='') {
+        $('#input_title').empty();
+        $('#input_title').append('修改"' + title + '"的分组');
+        if (type.length != 0){
+            $("#group_name").attr("value", type);
+        }
+        $("#group_fid").attr("value", fid);
+        $('#inputModal').modal('show');
+    }
+
+    function change_group(){
+
+        var group_name = $(" input[ name='group_name' ] ").val();
+        const group_fid = $(" input[ name='group_fid' ] ").val();
+
+        if (group_name.length==0){
+            group_name = '未分类';
+        }
+
+        $('#showerror').empty();
+
+        $.post(script_root + '/change_group', {
+            'group_name': group_name,
+            'group_fid': group_fid,
+            'nonce': $(" input[ name='nonce' ] ").val(),
+        }, function (data) {
+            //document.location.href = "/team";
+            if (data.length==0) {
+                document.location.href = "/favourite?tag=" + default_tag;
+            }
+            else {
+               showerror(data[0]);
+               return;
+            }
+
+        });
+
+    }
+
+    function show_info(body, title='错误提示'){
+        $('#modal_title').empty();
+        $('#modal_title').append(title);
+        $('#modal_body').empty();
+        $('#modal_body').append(body);
+        $('#info').modal('show');
+    }
+    function star(fid){
+        $.get(script_root + '/star?id=' + fid, function (data) {
+            //document.location.href = "/team";
+            if (data[0] == 'succeed'){
+                $('#star_' + fid).empty();
+                $('#star_' + fid).append('<a href="javascript:void(0);" onclick="unstar(' + "'" + fid + "'" +')"><i class="glyphicon glyphicon-star yellow"></i></a>')
+            }else{
+                show_info(data[0]);
+            }
+        });
+
+    }
+
+    function unstar(fid){
+        $.get(script_root + '/unstar?id=' + fid, function (data) {
+            //document.location.href = "/team";
+            if (data[0] == 'succeed'){
+                $('#star_' + fid).empty();
+                $('#star_' + fid).append('<a href="javascript:void(0);" onclick="star(' + "'"+ fid + "'" +')"><i class="glyphicon glyphicon-star-empty" style="color: #333;"></i></a>')
+            }else{
+                show_info(data[0]);
+            }
+        });
+
+    }
+
+    $(document).ready(function () {
+
+    });
+    </script>
+{% endblock %}

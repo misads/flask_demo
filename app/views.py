@@ -42,52 +42,13 @@ def index():
 
 
 @views.route('/hot')
-def get_hot():
+def hot():
     ans = {}
     tags = ['D', 'Z', 'Y', '3Y', '6Y', 'N']
     for tag in tags:
         hot = utils.get_hot(tag)
         ans[tag] = hot
     return render_template('hot.html', hot=ans, url='/hot')
-
-
-@views.route('/test')
-def test():
-    overall = []
-    codes = ['1.000001',
-             '0.399001',
-             '0.399006',
-             '0.399005',
-             '1.000300',
-             '1.000016',
-             '1.000003',
-             '1.000002']
-
-    for code in codes:
-        name, today, trend, rate = utils.get_overall(code)
-        overall.append([name, today, trend, rate])
-
-    return jsonify(overall)
-
-
-@views.route('/update')
-def update():
-    utils.updata_value()
-    utils.set_config('last_update', utils.get_time_stamp())
-    return jsonify(['ok'])
-
-
-@views.route('/update_hot')
-def update_hot():
-    utils.update_hot()
-    utils.set_config('last_update_hot', utils.get_time_stamp())
-    return jsonify(['ok'])
-
-
-@views.route('/query')
-def query():
-    d_q = Fund.query.limit(200).all()
-    return render_template('query.html', url='/query', data=d_q)
 
 
 @views.route('/all')
@@ -123,12 +84,26 @@ def favourite():
 
         his_dict[i] = line
 
+    fav_q = Favourite.query.filter_by(uid=uid).all()
+    fav_dict = {}
+
+    tag = request.args.get('tag')
+
+    for i in fav_q:
+        g = i.group
+        if not tag:
+            tag = g
+        if g in fav_dict:
+            fav_dict[g].append(i.fid)
+        else:
+            fav_dict[g] = [i.fid]
+
     chance = utils.get_chance()
     top = utils.get_top()
     last_update = utils.get_last_update()
     # return jsonify(his_dict)
-    return render_template('fund.html', url='/favourite', data=d_q, fav_list=fav_list,
-                           his_dict=his_dict, chance=chance, top=top,
+    return render_template('favourite.html', url='/favourite', data=d_q, fav_dict=fav_dict,
+                           his_dict=his_dict, chance=chance, top=top, tag=tag,
                            last_update=last_update, q=u'自选基金')
 
 
@@ -188,21 +163,8 @@ def fund():
 REMOTE_HOST = "/html/user/static/js/echarts"
 
 
-@views.route('/new')
-def get_new():
-    return jsonify(utils.get_new())
-
-
-@views.route('/chance')
-def get_chance():
-    if not utils.authed():
-        return redirect('/login')
-
-    return jsonify([])
-
-
 @views.route('/detail')
-def echart():
+def detail():
     id = request.args.get('id')
     if not id:
         return render_template('echart.html')
@@ -258,6 +220,7 @@ def echart():
 
         db.session.commit()
 
+        from app.interfance import line_chart
         kline = line_chart(date, values, "%s (%s)" % (f_q.name, id))
         return render_template('echart.html', url='/detail', myechart=kline.render_embed(),
                                host=REMOTE_HOST,
@@ -269,97 +232,8 @@ def echart():
         return render_template('echart.html')
 
 
-def line_chart(date, values, title='Graph 1'):
-    # date, values, rates = utils.get_k_line(code)
-    # kline = Kline("%s (%s)" % (name, code), width=1200, height=600)
-    scale = 30. / max(45, len(date)) * 100
-    limit = slice(-30, None)
-    # utils.color_print(scale, 3)
-
-    line = Line(title, width=1000, height=500)
-    line.add(
-        "净值",
-        date,
-        values,
-        yaxis_min='dataMin',
-        is_label_show=True,
-        yaxis_type='value',
-        is_datazoom_extra_show=False,
-        datazoom_extra_range=[90, 100],
-        datazoom_extra_type='both',
-        is_smooth=True,
-        mark_point=["max", "min"],
-        is_datazoom_show=True,
-        datazoom_type='both',
-        datazoom_range=[100-scale, 100],
-        line_width=3,
-        label_text_size=15,
-        label_emphasis_textsize=15,
-        is_random=False,
-        label_color=['#3C505E', '#D48265'],
-    )
-
-    return line
-
-
-@views.route('/mystar')
-def mystar():
-    if not utils.authed():
-        return jsonify(['login first'])
-    uid = session['id']
-    fav_q = Favourite.query.filter_by(uid=uid).all()
-    fav_q = [i.fid for i in fav_q]
-    return jsonify(fav_q)
-
-
-@views.route('/star')
-def star():
-    if not utils.authed():
-        return jsonify(['login first'])
-    requests = request.args
-    if 'id' not in requests:
-        return jsonify(['failed'])
-
-    fid = requests['id']
-    f_q = Fund.query.filter_by(id=fid).first()
-    if not f_q:
-        return jsonify(['invalid fund id'])
-
-    uid = session['id']
-    fav_q = Favourite.query.filter_by(uid=uid, fid=fid).first()
-    if fav_q:
-        return jsonify(['already stared'])
-
-    new_star = Favourite(uid, fid)
-    db.session.add(new_star)
-    db.session.commit()
-
-    return jsonify(['succeed'])
-
-
-@views.route('/unstar')
-def unstar():
-    if not utils.authed():
-        return jsonify(['login first'])
-    requests = request.args
-    if 'id' not in requests:
-        return jsonify(['failed'])
-
-    fid = requests['id']
-
-    uid = session['id']
-    fav_q = Favourite.query.filter_by(uid=uid, fid=fid).first()
-    if not fav_q:
-        return jsonify(['not stared'])
-
-    db.session.delete(fav_q)
-    db.session.delete(fav_q)
-    db.session.commit()
-    return jsonify(['succeed'])
-
-
 @views.route('/html/user/static/<path:path>')
-def themes_handler(path):
+def static_route(path):
     filename = safe_join(app.root_path, 'html', 'user', 'static', path)
     if os.path.isfile(filename):
         return send_file(filename)
