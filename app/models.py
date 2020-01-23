@@ -40,11 +40,10 @@ class Favourite(db.Model):
     fid = db.Column(db.String(32), db.ForeignKey('fund.id'))
     group = db.Column(db.String(128))
 
-    def __init__(self, uid, fid, group=None):
+    def __init__(self, uid, fid, group='未分类'):
         self.uid = uid
         self.fid = fid
-        if group:
-            self.group = group
+        self.group = group
 
 
 class Fund(db.Model):
