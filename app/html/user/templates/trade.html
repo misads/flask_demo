@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container text-center">
+  <div class="jumbotron">
+      <h3>余额: {{ balance }} <a href="/pay">充值</a></h3>
+  </div>
+
+
+</div>
+
+    {% if data %}
+
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="showerror">
+
+                </div>
+
+                <table class="table table-striped table-bordered" style="margin-bottom:0px;">
+                    <caption>表1</caption>
+                    <colgroup>
+                        <col width="150px">
+                        <col>
+                        <col width="80px">
+                        <col width="80px">
+                        <col width="80px">
+                        <col width="80px">
+                        <col width="80px">
+                        <col width="80px">
+                        <col width="80px">
+                        <col width="80px">
+                        <col width="120px">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>时间</th>
+                            <th>名称</th>
+                            <th style="text-align: center;">成本</th>
+                            <th style="text-align: center;">卖出价</th>
+                            <th style="text-align: center;">今日净值</th>
+                            <th style="text-align: center;">持有收益</th>
+                            <th style="text-align: center;">
+                                <a href="#">持有涨跌</a>
+                            </th>
+                            <th style="text-align: center;">
+                                <a href="#">卖出收益</a>
+                            </th>
+                            <th style="text-align: center;">
+                                <a href="#">卖出涨跌</a>
+                            </th>
+                            <th style="text-align: center;">
+                                <a href="#">金额 <b class="caret up"></b></a>
+                            </th>
+                            <th style="text-align: center;">状态</th>
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in data %}
+                            {% if d.status == '买入' %}
+                                <tr class="danger">
+                            {% elif d.status == '确认份额' %}
+                                <tr class="warning">
+                            {% elif d.status == '申请买入' or d.status == '等待中' %}
+                                <tr class="info">
+                            {% elif d.status == '卖出' %}
+                                <tr class="success">
+                            {% endif %}
+                                <td>{{ d.time }}</td>
+                                <td>
+                                    <a href="/detail?id={{ d.fid }}">{{ d.name }}</a>
+
+                                </td>
+                                <td style="text-align: center;">
+                                    {% if d.status == '申请买入' or d.status == '等待中' or d.status == '确认份额' %}
+                                    -
+                                    {% else %}
+                                    {{ d.cost }}
+                                    {% endif %}
+                                    </td>
+                                <td style="text-align: center;">{{ d.value if d.value else '-'}}</td>
+                                <td style="text-align: center;">
+                                    {% if d.value_today  %}
+                                        {% if d.rate %}
+                                            {% if '-' in d.rate %}
+                                                <span class="green">{{ d.value_today }}</span>
+                                            {% elif d.rate=='0.00' %}
+                                                <span class="grey">{{ d.value_today }}</span>
+                                            {% else %}
+                                                <span class="red">{{ d.value_today }}</span>
+                                            {% endif %}
+                                        {% else %}
+                                            {{ d.value_today }}
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td style="text-align: center;">
+                                    {% if d.hold_rate %}
+                                        {% if d.hold_rate %}
+                                            {% if '-' in d.hold_rate %}
+                                                <span class="green">{{ d.hold_gain }}</span>
+                                            {% elif d.rate=='0.00' %}
+                                                <span class="grey">{{ d.hold_gain }}</span>
+                                            {% else %}
+                                                <span class="red">{{ d.hold_gain }}</span>
+                                            {% endif %}
+                                        {% else %}
+                                            {{ d.hold_rate }}
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td style="text-align: center;">
+                                    {% if d.hold_rate  %}
+                                        {% if d.hold_rate %}
+                                            {% if '-' in d.hold_rate %}
+                                                <span class="green">{{ d.hold_rate }}%</span>
+                                            {% elif d.rate=='0.00' %}
+                                                <span class="grey">{{ d.hold_rate }}%</span>
+                                            {% else %}
+                                                <span class="red">{{ d.hold_rate }}%</span>
+                                            {% endif %}
+                                        {% else %}
+                                            {{ d.hold_rate }}%
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td style="text-align: center;">
+                                    {% if d.sell_rate  %}
+                                        {% if d.sell_rate %}
+                                            {% if '-' in d.sell_gain %}
+                                                <span class="green">{{ d.sell_gain }}</span>
+                                            {% elif d.rate=='0.00' %}
+                                                <span class="grey">{{ d.sell_gain }}</span>
+                                            {% else %}
+                                                <span class="red">{{ d.sell_gain }}</span>
+                                            {% endif %}
+                                        {% else %}
+                                            {{ d.sell_gain }}
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+
+                                <td style="text-align: center;">
+                                    {% if d.sell_rate  %}
+                                        {% if d.sell_rate %}
+                                            {% if '-' in d.sell_rate %}
+                                                <span class="green">{{ d.sell_rate }}%</span>
+                                            {% elif d.rate=='0.00' %}
+                                                <span class="grey">{{ d.sell_rate }}%</span>
+                                            {% else %}
+                                                <span class="red">{{ d.sell_rate }}%</span>
+                                            {% endif %}
+                                        {% else %}
+                                            {{ d.sell_rate }}%
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+
+                                </td>
+                                <td style="text-align: center;">
+                                    {{ d.amount }}
+                                </td>
+                                <td id="star_{{ d.id }}" style="text-align: center;">
+                                    {% if d.status=='买入' %}
+                                        已买入
+                                    {% elif d.status=='确认份额' %}
+                                        确认份额  <a href="javascript:;" onclick="confirm('{{ d.id }}');">[确认]</a>
+                                    {% elif d.status=='申请买入' %}
+                                        申请买入 <a href="javascript:;" onclick="undo('{{ d.id }}');">[撤销]</a>
+                                    {% elif d.status=='等待中' %}
+                                        等待中...
+                                    {% elif d.status=='卖出' %}
+                                        已卖出
+                                    {% endif %}
+                                </td>
+
+
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <p class="text-muted wy-text-small" style="font-size:10px;margin-top: 5px;">最后更新: {{ last_update if last_update else 'None'}}</p>
+            </div>
+
+        </div>
+    </div>
+    {% else %}
+        <div class="container">
+        <p><br/>暂无交易记录，去<a href="/all">基金市场</a>看看</p>
+        </div>
+
+    {% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+    <script>
+    function showerror(msg) {
+        $('.showerror').empty();
+        $('.showerror').hide();
+        $('.showerror').append('<div class="alert alert-danger alert-dismissable" role="alert">' +
+                '<span class="sr-only">Error:</span>'+
+                msg +
+                '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span'+
+                       ' aria-hidden="true">×</span></button></div>');
+        $('.showerror').fadeIn();
+        setTimeout(function () {
+                $('.showerror').fadeOut();
+            }, 2500);
+    }
+
+    function undo(id){ //撤销买入
+        $.post(script_root + '/undo', {
+            'id': id,
+            'nonce': $(" input[ name='nonce' ] ").val(),
+        }, function (data) {
+            //document.location.href = "/team";
+            if (data.length==0) {
+                document.location.href = "/trade";
+
+            }
+            else {
+               showerror(data[0]);
+               return;
+            }
+        });
+
+    }
+
+    function confirm(id){ //撤销买入
+        $.post(script_root + '/confirm', {
+            'id': id,
+            'nonce': $(" input[ name='nonce' ] ").val(),
+        }, function (data) {
+            //document.location.href = "/team";
+            if (data.length==0) {
+                document.location.href = "/trade";
+
+            }
+            else {
+               showerror(data[0]);
+               return;
+            }
+        });
+
+    }
+
+    </script>
+{% endblock %}

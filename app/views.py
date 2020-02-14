@@ -10,7 +10,8 @@ from app import utils
 from pyecharts import Scatter3D
 from pyecharts import Kline, Line
 
-from app.models import db, Fund, Favourite, History, Theme
+from app.models import db, Fund, Favourite, History, Theme, Wealth, Trade
+from app.utils import authed_only
 
 views = Blueprint('views', __name__)
 
@@ -71,6 +72,10 @@ def favourite():
         return redirect('/login')
 
     uid = session['id']
+
+    w_q = Wealth.query.filter_by(uid=uid, type='balance').first()
+    balance = w_q.share if w_q else 0.00
+
     d_q = Fund.query.join(Favourite).filter(Favourite.uid == uid).all()
     fav_list = [i.id for i in d_q]
 
@@ -103,7 +108,7 @@ def favourite():
     last_update = utils.get_last_update()
     # return jsonify(his_dict)
     return render_template('favourite.html', url='/favourite', data=d_q, fav_dict=fav_dict,
-                           his_dict=his_dict, chance=chance, top=top, tag=tag,
+                           his_dict=his_dict, chance=chance, top=top, tag=tag, balance='%.2f' % balance,
                            last_update=last_update, q=u'自选基金')
 
 
@@ -159,6 +164,118 @@ def fund():
     return render_template('fund.html', url='/fund', data=d_q, fav_list=fav_list, last_update=last_update, q=q)
 
 
+@views.route('/wealth')
+@authed_only
+def wealth():
+    uid = session.get('id')
+
+    w_q = Wealth.query.filter_by(uid=uid, type='balance').first()
+    balance = w_q.share if w_q else 0.00
+    property = balance
+
+    w_q = Wealth.query.filter_by(uid=uid, type='fund').all()
+    fund_list = [i.fid for i in w_q]
+    fund_q = Fund.query.filter(Fund.id.in_(fund_list)).all()
+    fund_dict = {i.id: i for i in fund_q}
+
+    data = []
+    for i in w_q:
+        gain = i.share * (float(fund_dict[i.fid].value_today) - i.cost)
+        cost_all = i.cost * i.share
+        amount = float(fund_dict[i.fid].value_today) * i.share
+        line = {'id': i.fid,
+                'name': fund_dict[i.fid].name,
+                'value_today': fund_dict[i.fid].value_today,
+                'amount': '%.2f' % amount,
+                'cost': i.cost,
+                'rate': fund_dict[i.fid].rate,
+                'gain': '%.2f' % gain,
+                'gain_rate': '%.2f' % (gain / cost_all * 100)
+                }
+        data.append(line)
+        property += amount
+
+    last_update = utils.get_last_update()
+    return render_template('wealth.html', url='/wealth', balance='%.2f' % balance, property='%.2f' % property,
+                           data=data, last_update=last_update)
+
+
+DEBUG_MODE = False
+
+
+@views.route('/trade')
+@authed_only
+def trade():
+    uid = session.get('id')
+
+    w_q = Wealth.query.filter_by(uid=uid, type='balance').first()
+    balance = w_q.share if w_q else 0.00
+    property = balance
+
+    data = None
+
+    if not DEBUG_MODE:
+        d_q = Trade.query.filter_by(uid=uid).filter(Trade.type.in_(['pending', 'request'])).all()
+
+        for i in d_q:
+            status = utils.check_time(i.time_stamp)
+            i.type = status
+            # if status == 'confirm':
+            #    i.share = i.share / i.cost
+
+        db.session.commit()
+
+    d_q = db.session.query(Trade).filter(Trade.uid == uid).order_by(Trade.time_stamp.desc(), Trade.id).all()
+
+    fund_list = [i.fid for i in d_q]
+    fund_q = Fund.query.filter(Fund.id.in_(fund_list)).all()
+    fund_dict = {i.id: i for i in fund_q}
+
+    data = []
+    status = {
+        'request': u'申请买入',
+        'pending': u'等待中',
+        'confirm': u'确认份额',
+        'buy': u'买入',
+        'sell': u'卖出'
+    }
+    for i in d_q:
+        value_today = fund_dict[i.fid].value_today
+        hold_gain = i.share * (float(value_today) - i.cost)
+        cost_all = i.share * i.cost
+        hold_rate = hold_gain / cost_all * 100
+        sell_gain = i.share * (i.value - i.cost) if i.type == 'sell' else 0.
+        sell_rate = (i.value - i.cost) / i.cost * 100 if i.type == 'sell' else 0.
+        amount = float(fund_dict[i.fid].value_today) * i.share if i.type not in ['pending', 'request', 'confirm'] else i.share
+
+        line = {'id': i.id,
+                'fid': i.fid,
+                'name': fund_dict[i.fid].name,
+                'value_today': value_today,
+                'rate': fund_dict[i.fid].rate,
+                'share': '%.2f' % i.share,
+                'cost': '%.4f' % i.cost,
+                'value': '%.4f' % i.value if i.type == 'sell' else None,
+                'hold_gain': '%.2f' % hold_gain if i.type != 'sell' else None,
+                'hold_rate': '%.2f' % hold_rate if i.type != 'sell' else None,
+                'sell_gain': '%.2f' % sell_gain if i.type == 'sell' else None,
+                'sell_rate': '%.2f' % sell_rate if i.type == 'sell' else None,
+                'amount': '%.2f' % amount,
+                'status': status[i.type],
+                'time': utils.get_time_str(i.time_stamp),
+                }
+        data.append(line)
+
+    last_update = utils.get_last_update()
+    return render_template('trade.html', url='/trade', balance='%.2f' % balance,
+                           data=data, last_update=last_update)
+
+
+@views.route('/pay')
+def pay():
+    return render_template('pay.html', url='/pay')
+
+
 # REMOTE_HOST = "https://pyecharts.github.io/assets/js/"
 REMOTE_HOST = "/html/user/static/js/echarts"
 
@@ -193,7 +310,7 @@ def detail():
         # return jsonify(details)
         for i in [7, 30, 60, 90, 365]:
             yestoday = max(values[-i:])
-            c_high = round((today - yestoday)/yestoday*100, 2)
+            c_high = round((today - yestoday) / yestoday * 100, 2)
 
             yestoday = min(values[-i:])
             c_low = round((today - yestoday) / yestoday * 100, 2)
@@ -211,7 +328,7 @@ def detail():
             dt = date[-i - 1]
 
             key = 'value_' + str(i)
-            value = values[-i-1]
+            value = values[-i - 1]
             update_history(id, key, value, dt)
 
             key = 'rate_' + str(i)

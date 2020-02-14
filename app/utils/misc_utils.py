@@ -11,6 +11,35 @@ def check_phone_format(phone):
     return bool(re.match(r"(^[1][3,4,5,7,8][0-9]{9}$)", phone))
 
 
+def is_trade_time(timestamp):
+    base_time = datetime.datetime.utcfromtimestamp(timestamp)
+    time_zone_time = base_time + datetime.timedelta(hours=8)
+    trade_time = True
+    if time_zone_time.weekday() in (5, 6):
+        trade_time = False
+    if time_zone_time.hour < 9 and time_zone_time.minute < 30:
+        trade_time = False
+    if time_zone_time.hour > 15:
+        trade_time = False
+    if time_zone_time.hour == 11 and time_zone_time.minute >= 30 or \
+            time_zone_time.hour == 12 or time_zone_time.hour == 13 and time_zone_time.minute <= 30:
+        trade_time = False
+    return trade_time
+
+
+def check_time(timestamp):
+    c = get_time_stamp()
+    base_time = datetime.datetime.utcfromtimestamp(float(c))
+    time_zone_time = base_time + datetime.timedelta(hours=8)
+
+    if int(c) - int(timestamp) > 18 * 3600:
+        return 'confirm'
+    if time_zone_time.hour > 15:
+        return 'pending'
+
+    return 'request'
+
+
 def color_print(text='', color=0):
     """Print colored text.
     Args:

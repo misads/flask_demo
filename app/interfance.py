@@ -10,28 +10,17 @@ from app import utils
 from pyecharts import Scatter3D
 from pyecharts import Kline, Line
 
-from app.models import db, Fund, Favourite, History, Theme
+from app.models import db, Fund, Favourite, History, Theme, Wealth, Trade
 
 interfance = Blueprint('interfance', __name__)
 
 
 @interfance.route('/test')
 def test():
-    overall = []
-    codes = ['1.000001',
-             '0.399001',
-             '0.399006',
-             '0.399005',
-             '1.000300',
-             '1.000016',
-             '1.000003',
-             '1.000002']
+    time_stamp = utils.get_time_stamp()
+    ans = utils.get_value('320007', time_stamp)
 
-    for code in codes:
-        name, today, trend, rate = utils.get_overall(code)
-        overall.append([name, today, trend, rate])
-
-    return jsonify(overall)
+    return jsonify(ans)
 
 
 @interfance.route('/update')
@@ -107,6 +96,101 @@ def unstar():
     db.session.delete(fav_q)
     db.session.commit()
     return jsonify(['succeed'])
+
+
+@interfance.route('/buy', methods=['POST'])
+def buy():
+    if not utils.authed():
+        return jsonify(['login first'])
+
+    uid = session['id']
+    money = request.form['money']
+    fid = request.form['fid']
+    if not money or not fid:
+        return jsonify([u'金额不能为空'])
+
+    balance = utils.get_balance()
+    try:
+        money = round(float(money), 2)
+    except:
+        return jsonify([u'请输出正确的金额'])
+
+    if money > balance:
+        return jsonify([u'余额不足'])
+
+    w_q = Wealth.query.filter_by(uid=uid, type='balance').first()
+    w_q.share -= money
+
+    time_stamp = utils.get_time_stamp()
+    share = money
+    cost = 1
+    new_trade = Trade(uid, fid, share, 'request', cost, cost, time_stamp)
+    db.session.add(new_trade)
+
+    db.session.commit()
+
+    return jsonify([])
+
+
+@interfance.route('/undo', methods=['POST'])
+def undo():
+    if not utils.authed():
+        return jsonify(['login first'])
+
+    uid = session['id']
+    id = request.form['id']
+
+    if not id or not id.isdigit():
+        return jsonify([u'交易不存在'])
+
+    id = int(id)
+
+    t_q = Trade.query.filter_by(uid=uid, id=id).first()
+    if t_q.type != 'request':
+        return jsonify([u'无法撤回，请刷新'])
+
+    money = t_q.share
+    db.session.delete(t_q)
+
+    w_q = Wealth.query.filter_by(uid=uid, type='balance').first()
+    w_q.share += money
+
+    db.session.commit()
+
+    return jsonify([])
+
+
+@interfance.route('/confirm', methods=['POST'])
+def confirm():
+    if not utils.authed():
+        return jsonify(['login first'])
+
+    uid = session['id']
+    id = request.form['id']
+
+    if not id or not id.isdigit():
+        return jsonify([u'交易不存在'])
+
+    id = int(id)
+
+    t_q = Trade.query.filter_by(uid=uid, id=id).first()
+    if t_q.type != 'confirm':
+        return jsonify([u'无法确认，请刷新'])
+
+    cost = utils.get_value(t_q.fid, t_q.time_stamp)
+    if not cost:
+        return jsonify([u'无法确认，请明天重试'])
+    t_q.cost = cost
+    t_q.share = t_q.share / cost
+
+    t_q.type = 'buy'
+
+    new_fund = Wealth(uid, t_q.fid, t_q.share, cost, 'fund')
+    db.session.add(new_fund)
+
+    db.session.commit()
+
+    return jsonify([])
 
 
 @interfance.route('/change_group', methods=['POST'])

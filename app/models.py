@@ -59,8 +59,53 @@ class Fund(db.Model):
         self.name = name
         self.fee = fee
 
-    def __repr__(self):
-        return "<Pages route {0}>".format(self.route)
+
+class Wealth(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    uid = db.Column(db.Integer, db.ForeignKey('users.id'))
+    fid = db.Column(db.String(32))
+    share = db.Column(db.Float)
+    cost = db.Column(db.Float)  # 成本
+    type = db.Column(db.String(32))
+
+    def __init__(self, uid, fid, share, cost, type):
+        """
+            :param uid:
+            :param fid:
+            :param share:
+            :param type: 'balance' or 'fund'
+        """
+        self.uid = uid
+        self.fid = fid
+        self.share = share
+        self.cost = cost
+        self.type = type
+
+
+class Trade(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    uid = db.Column(db.Integer, db.ForeignKey('users.id'))
+    fid = db.Column(db.String(32), db.ForeignKey('fund.id'))
+    share = db.Column(db.Float)
+    type = db.Column(db.String(32))   # 'buy' 'sell'
+    cost = db.Column(db.Float)  # '买入成本'
+    value = db.Column(db.Float)  # '买入净值'
+    time_stamp = db.Column(db.String(32))
+
+    def __init__(self, uid, fid, share, type, cost, value, time_stamp):
+        """
+            :param uid:
+            :param fid:
+            :param share:
+            :param type: 'balance' or 'fund'
+        """
+        self.uid = uid
+        self.fid = fid
+        self.share = share
+        self.type = type
+        self.cost = cost
+        self.value = value
+        self.time_stamp = time_stamp
 
 
 class Cache(db.Model):

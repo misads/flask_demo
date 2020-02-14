@@ -6,6 +6,48 @@
 
 {% block content %}
 
+<div class="modal fade" id="buyModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="buy_header" style="font-size:20px;">买入</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="display: inline"><span
+                        aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+
+                <h4 class="modal-title" id="buy_title">买入金额</h4>
+                <br/>
+{#                col-sm-offset-2 col-sm-8" style="margin-top: 40px;"#}
+                <div class="site-login" style="margin-left:20%; width: 60%;">
+{#                    <form id="login-form" class="form-signin" style="margin-left:20%; width: 60%;" action="/login" method="post">#}
+                        <div class="showerror">
+
+                        </div>
+                        <input type="hidden" name="nonce"
+                               value="{{ nonce }}">
+                        <input type="hidden" id="buy_fid" name="buy_fid"
+                               value="">
+                        <div class="form-group field-loginform-username required">
+                            <div class="input-group"><span class="input-group-addon"><i
+                                    class="glyphicon glyphicon-import"></i></span><input
+                                    type="text" id="buy_money" class="form-control" name="buy_money"
+                                    placeholder="最多可买入{{ balance }}元" aria-required="true"><span class="input-group-addon">元</span></div>
+                            <p class="help-block help-block-error"></p>
+                        </div>
+                        <div class="form-group">
+                            <a class="btn btn-primary" name="group-button" onclick="buy();">申请买入</a></div>
+
+{#                    </form>#}
+                </div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
 <div class="modal fade" id="inputModal">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -131,6 +173,7 @@
                                 <col width="70px">
                                 <col width="90px">
                                 <col width="70px">
+                                <col width="70px">
                             </colgroup>
                             <thead>
                                 <tr>
@@ -151,7 +194,8 @@
 
                                     </th>
                                     <th style="text-align: center;">买入费率</th>
-                                    <th style="text-align: center;">加自选</th>
+                                    <th style="text-align: center;">自选</th>
+                                    <th style="text-align: center;">操作</th>
 
                                 </tr>
                             </thead>
@@ -224,12 +268,13 @@
 
                                         </td>
                                         <td style="text-align: center;">{{ d.fee }}</td>
+
                                         <td id="star_{{ d.id }}" style="text-align: center;">
                                                 <!--加自选 -->
                                                 <a href="javascript:void(0);" onclick="unstar('{{ d.id }}')"><i class="glyphicon glyphicon-star yellow"></i></a>
 
                                             </td>
-
+                                        <td style="text-align: center;"><a href="javascript:;" onclick="show_buy('{{ d.name }}' ,'{{ d.id }}');">[买入]</a></td>
                                     </tr>
                                     {% endif %}
                                 {% endfor %}
@@ -414,6 +459,39 @@
         }
         $("#group_fid").attr("value", fid);
         $('#inputModal').modal('show');
+    }
+
+    function show_buy(title, fid) {
+        $('#buy_header').empty();
+        $('#buy_header').append('买入"' + title + '"');
+        $("#buy_fid").attr("value", fid);
+        $('#buyModal').modal('show');
+    }
+
+
+    function buy(){
+
+        const fid = $(" input[ name='buy_fid' ] ").val();
+        const money = $(" input[ name='buy_money' ] ").val();
+
+        $('#showerror').empty();
+        $.post(script_root + '/buy', {
+            'money': money,
+            'fid': fid,
+            'nonce': $(" input[ name='nonce' ] ").val(),
+        }, function (data) {
+            //document.location.href = "/team";
+            if (data.length==0) {
+                // document.location.href = "/favourite?tag=" + default_tag;
+                document.location.href = "/trade" ;
+            }
+            else {
+               showerror(data[0]);
+               return;
+            }
+
+        });
+
     }
 
     function change_group(){

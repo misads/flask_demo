@@ -1,7 +1,7 @@
 # coding=utf-8
 import pdb
 
-from app.models import db, Users
+from app.models import db, Users, Wealth
 from flask import session
 from app.models import db, Fund, History, Favourite, Configs, Theme
 import requests
@@ -166,7 +166,6 @@ def get_theme(link):
 
 
 
-
 def get_overall(code='1.000001'):
 
     t = get_time_stamp() + '289'
@@ -194,6 +193,19 @@ def get_overall(code='1.000001'):
         return name, today, trend, rate
     else:
         return [], [], [], []
+
+
+def get_value(code, time_stamp):
+    date_list, worth_values, rates = get_k_line(code)
+    aday = 3600 * 24
+    time_stamp = int(time_stamp)
+    local_time = get_local_time(time_stamp)
+    for i in range(len(date_list)-1, -1, -1):
+        if date_list[i] == local_time:
+            return worth_values[i]
+
+    color_print(local_time, 3)
+    return None
 
 
 def get_k_line(code):
@@ -292,6 +304,17 @@ def updata_value():
     db.session.commit()
 
 
+def get_balance():
+    if not authed():
+        return 0.00
+
+    uid = session['id']
+
+    w_q = Wealth.query.filter_by(uid=uid, type='balance').first()
+    balance = w_q.share if w_q else 0.00
+    return balance
+
+
 def get_new():
     url = 'http://fund.eastmoney.com/data/FundNewIssue.aspx?t=zs&sort=jzrgq,desc&page=1,150&isbuy=2&v=' + str(random.random())
 
@@ -306,10 +329,10 @@ def get_new():
         ans = []
         for i in worth_list:
             s = i[5].split(u'～')
-            # if s[0][:5] == s[1][:5] and u'债券' not in i[4]:
-            #     ans.append(i)
-            if s[0] == s[1]:
+            if s[0][:7] == s[1][:7] and u'债券' not in i[4]:
                 ans.append(i)
+            # if s[0] == s[1]:
+            #     ans.append(i)
 
         return ans
 
