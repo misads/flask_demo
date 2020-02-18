@@ -220,6 +220,15 @@ def line_chart(date, values, title='Graph 1'):
     limit = slice(-30, None)
     # utils.color_print(scale, 3)
 
+    moving = values[0]
+    ave = [moving]
+
+    for i in range(1, len(values)):
+        moving = 0.9 * moving + 0.1 * values[i]
+        ave.append(moving)
+
+    ave = [round(i, 3) for i in ave]
+
     line = Line(title, width=1000, height=500)
     line.add(
         "净值",
@@ -242,5 +251,28 @@ def line_chart(date, values, title='Graph 1'):
         is_random=False,
         label_color=['#3C505E', '#D48265'],
     )
+
+    line.add(
+        "均线",
+        date,
+        ave,
+        yaxis_min='dataMin',
+        is_label_show=False,
+        yaxis_type='value',
+        is_datazoom_extra_show=False,
+        datazoom_extra_range=[90, 100],
+        datazoom_extra_type='both',
+        is_smooth=True,
+        mark_point=["max", "min"],
+        is_datazoom_show=True,
+        datazoom_type='both',
+        datazoom_range=[100-scale, 100],
+        line_width=2,
+        label_text_size=15,
+        label_emphasis_textsize=15,
+        is_random=False,
+        label_color=['#3C505E', '#D48265'],
+    )
+
 
     return line
