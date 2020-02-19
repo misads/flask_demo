@@ -239,7 +239,7 @@ def get_k_line(code):
             value = x['y']
 
             worth_values.append(value)
-            date_list.append(get_local_time(int(x['x']) // 1000))
+            date_list.append(get_local_time(int(x['x']) // 1000 + 3600*24))
             if i == 0:
                 start = value
             else:

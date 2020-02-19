@@ -213,21 +213,38 @@ def change_group():
     return jsonify([])
 
 
-def line_chart(date, values, title='Graph 1'):
+def line_chart(date, values, title='Graph 1', today=None):
     # date, values, rates = utils.get_k_line(code)
     # kline = Kline("%s (%s)" % (name, code), width=1200, height=600)
     scale = 30. / max(45, len(date)) * 100
     limit = slice(-30, None)
     # utils.color_print(scale, 3)
+    if today is not None:
+        try:
+            values.append(round(values[-1] * (1+float(today)/100.), 3))
+            date.append(utils.get_local_time(int(utils.get_time_stamp())))
+        except:
+            pass
 
     moving = values[0]
-    ave = [moving]
+    ema = [moving]
+
+    ave5 = [values[i] for i in range(4)]
+    for i in range(4, len(values)):
+        ave5.append(sum(values[i-4: i+1])/5)
+
+    ave5 = [round(i, 3) for i in ave5]
 
     for i in range(1, len(values)):
         moving = 0.9 * moving + 0.1 * values[i]
-        ave.append(moving)
+        ema.append(moving)
 
-    ave = [round(i, 3) for i in ave]
+    offset = [0.6+10*(values[i] - ave5[i]) / ave5[i] for i in range(len(values))]
+
+    offset = [round(i, 2) for i in offset]
+
+    ema = [round(i, 3) for i in ema]
+
 
     line = Line(title, width=1000, height=500)
     line.add(
@@ -249,13 +266,13 @@ def line_chart(date, values, title='Graph 1'):
         label_text_size=15,
         label_emphasis_textsize=15,
         is_random=False,
-        label_color=['#3C505E', '#D48265'],
+        label_color=['#3C505E', '#D48265', '#6CA5F8', '#9DC764'],
     )
 
     line.add(
-        "均线",
+        "EMA",
         date,
-        ave,
+        ema,
         yaxis_min='dataMin',
         is_label_show=False,
         yaxis_type='value',
@@ -271,8 +288,51 @@ def line_chart(date, values, title='Graph 1'):
         label_text_size=15,
         label_emphasis_textsize=15,
         is_random=False,
-        label_color=['#3C505E', '#D48265'],
+        label_color=['#3C505E', '#D48265', '#6CA5F8', '#9DC764'],
     )
 
+    line.add(
+        "5日均线",
+        date,
+        ave5,
+        yaxis_min='dataMin',
+        is_label_show=False,
+        yaxis_type='value',
+        is_datazoom_extra_show=False,
+        datazoom_extra_range=[90, 100],
+        datazoom_extra_type='both',
+        is_smooth=True,
+        mark_point=["max", "min"],
+        is_datazoom_show=True,
+        datazoom_type='both',
+        datazoom_range=[100-scale, 100],
+        line_width=2,
+        label_text_size=15,
+        label_emphasis_textsize=15,
+        is_random=False,
+        label_color=['#3C505E', '#D48265', '#6CA5F8', '#9DC764'],
+    )
+
+    line.add(
+        "乖离率",
+        date,
+        offset,
+        yaxis_min='dataMin',
+        is_label_show=False,
+        yaxis_type='value',
+        is_datazoom_extra_show=False,
+        datazoom_extra_range=[90, 100],
+        datazoom_extra_type='both',
+        is_smooth=True,
+        mark_point=["max", "min"],
+        is_datazoom_show=True,
+        datazoom_type='both',
+        datazoom_range=[100-scale, 100],
+        line_width=2,
+        label_text_size=15,
+        label_emphasis_textsize=15,
+        is_random=False,
+        label_color=['#3C505E', '#D48265', '#6CA5F8', '#9DC764'],
+    )
 
     return line

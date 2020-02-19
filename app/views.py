@@ -283,6 +283,7 @@ REMOTE_HOST = "/html/user/static/js/echarts"
 @views.route('/detail')
 def detail():
     id = request.args.get('id')
+    today_predict = request.args.get('today')
     if not id:
         return render_template('echart.html')
 
@@ -338,7 +339,7 @@ def detail():
         db.session.commit()
 
         from app.interfance import line_chart
-        kline = line_chart(date, values, "%s (%s)" % (f_q.name, id))
+        kline = line_chart(date, values, "%s (%s)" % (f_q.name, id), today_predict)
         return render_template('echart.html', url='/detail', myechart=kline.render_embed(),
                                host=REMOTE_HOST,
                                script_list=kline.get_js_dependencies(),
