@@ -26,6 +26,27 @@
             {{ myechart|safe }}
             </div>
         </div>
+        {% if op %}
+        <div>
+            <p><b {% if ('6' in op[0] or '7' in op[0] or '8' in op[0] or '9' in op[0] or '10' in op[0]) and '贸然' not in op[0] %}
+                    class = "text-danger"
+                  {% elif '0' in op[0] or '1' in op[0] or '2' in op[0] or '3' in op[0] or '4' in op[0] %}
+                    class = "text-success"
+                  {% endif %}
+                >昨日仓位: {{ op[0] }}成仓</b></p>
+            <p><b {% if ('6' in op[1] or '7' in op[1] or '8' in op[1] or '9' in op[1] or '10' in op[1]) and '贸然' not in op[1] %}
+                    class = "text-danger"
+                  {% elif '0' in op[1] or '1' in op[1] or '2' in op[1] or '3' in op[1] or '4' in op[1] %}
+                    class = "text-success"
+                  {% endif %}
+                >今日仓位: {{ op[1] }}成仓</b></p>
+            <p><b {% if op[2][:4] == '局部高点' or '卖出' in op[2] or '低吸' in op[2] %}
+                    class = "text-success"
+                  {% elif op[2][:4] == '局部低点' or '买入' in op[2] or '高抛' in op[2] %}
+                    class = "text-danger"
+                  {% endif %}>今日操作: {{ op[2] }}(控制仓位优先)</b> {{ op[3] }}</p>
+        </div>
+        {% endif %}
     </div>
 
     {% if details %}

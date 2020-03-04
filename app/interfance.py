@@ -213,7 +213,9 @@ def change_group():
     return jsonify([])
 
 
-def line_chart(date, values, title='Graph 1', today=None):
+def line_chart(date, values, title='Graph 1', today=None, tomorrow=None):
+    # date = date[:-13]
+    # values = values[:-13]
     # date, values, rates = utils.get_k_line(code)
     # kline = Kline("%s (%s)" % (name, code), width=1200, height=600)
     scale = 30. / max(45, len(date)) * 100
@@ -223,6 +225,13 @@ def line_chart(date, values, title='Graph 1', today=None):
         try:
             values.append(round(values[-1] * (1+float(today)/100.), 3))
             date.append(utils.get_local_time(int(utils.get_time_stamp())))
+        except:
+            pass
+
+    if tomorrow is not None:
+        try:
+            values.append(round(values[-1] * (1 + float(tomorrow) / 100.), 3))
+            date.append(utils.get_local_time(int(utils.get_time_stamp())+3600*24))
         except:
             pass
 
@@ -245,6 +254,122 @@ def line_chart(date, values, title='Graph 1', today=None):
 
     ema = [round(i, 3) for i in ema]
 
+    def level(v, a, e, v_, a_):
+        if a < e:
+            if v < a:
+                return u'0-1'
+            elif v >= a and v > e:  # 上超均线
+                return u'(建仓) 4-5成仓, (加仓) 6成仓, (减仓) 5'
+            else:
+                return u'(加仓) 3成仓, (减仓) 2'
+        else:
+            if v < e:
+                return u'不超过5'
+            elif v >= e and v < a:
+                return u'6-7'
+            else:
+                if v_ < a_ and v >= a:  # 上穿均线
+                    return u'9'
+                else:
+                    return u'9-7(获利后逐渐高抛)'
+
+    op = ['?', '?', u'保持不动', '']
+
+    op[0] = level(values[-2], ave5[-2], ema[-2], values[-3], ave5[-3])
+    op[1] = level(values[-1], ave5[-1], ema[-1], values[-2], ave5[-2])
+
+    offset_s = sorted(offset[-121:-1])
+    cut = int(len(offset_s)*0.05)
+
+    if '1' in op[1] or '2' in op[1] or '3' in op[1] or '4' in op[1]:
+        high = offset_s[-cut]
+        low = offset_s[cut]
+
+    elif '6' in op[1] or '7' in op[1] or '8' in op[1] or '9' in op[1]:
+        high = offset_s[-cut]
+        low = offset_s[cut]
+    else:
+        high = offset_s[-cut]
+        low = offset_s[cut]
+
+    if offset[-1] > high:
+        op[2] = u'局部高点'
+    elif offset[-1] < low:
+        op[2] = u'局部低点'
+
+    rate = (values[-1] - values[-2]) / values[-2] * 100
+    if rate > 3:
+        op[2] = u'买入'
+    elif rate < -3:
+        op[2] = u'卖出'
+
+    max_7 = max(values[-8: -1])
+    rate_max_7 = (values[-1] - max_7) / max_7 * 100
+
+    if rate_max_7 < -10:
+        op[2] = u'低吸'
+
+    ema_rate = (ema[-1] - ema[-2]) / ema[-2] * 100
+    ema_rate_1 = (ema[-2] - ema[-3]) / ema[-3] * 100
+    if -0.25 < ema_rate < 0.25:
+        if '9' in op[1]:
+            op[1] = u'不宜贸然操作 6-7'
+    if -0.25 < ema_rate_1 < 0.25:
+        if '9' in op[0]:
+            op[0] = u'不宜贸然操作 6-7'
+
+    op[3] = '(%s %s)' % (low, high)
+    # def get_level(l):
+    #     if '10' in l:
+    #         return 10
+    #     if '0' in l:
+    #         return 0
+    #     if '1' in l:
+    #         return 6
+    #
+    #     if '2' in l:
+    #         return 2
+    #
+    #     if '3' in l:
+    #         return 10  # 居然越高越好
+    #
+    #     if '4' in l:  # 1-3
+    #         return 8  # 居然越高越好
+    #     if '5' in l:
+    #         return 1
+    #     if '6' in l:
+    #         return 10
+    #     if '7' in l:
+    #         return 10  # # 居然越高越好
+    #     if '8' in l:
+    #         return 9  # 7-10 牛市时9很有作用
+    #     if '9' in l:
+    #         return 10  # 7-10 牛市时9很有作用
+    #
+    #
+    #
+    # levels = [get_level(level(values[i], ave5[i], ema[i], values[i-1], ave5[i-1])) for i in range(1, len(values))]
+    # levels = [0] + levels
+    # l_now = 0
+    # balance = 1000000.
+    # share = 0.
+    # for i in range(1, len(values)):
+    #     li = levels[i]
+    #     vi = values[i]
+    #     if li > l_now:
+    #         money = balance * (li - l_now) / (10-l_now)
+    #         share += money / vi
+    #         balance -= money
+    #         l_now = li
+    #     elif li < l_now:
+    #         dshare = share * (l_now - li) / l_now
+    #         share -= dshare
+    #         balance += dshare * vi
+    #         l_now = li
+
+
+
+    # op[3] = u'(%.2f = %.2f + %.2f 无操作: %.2f)' % (balance + share*values[-1], balance, share*values[-1], 1000000. / values[0] * values[-1])
 
     line = Line(title, width=1000, height=500)
     line.add(
@@ -335,4 +460,4 @@ def line_chart(date, values, title='Graph 1', today=None):
         label_color=['#3C505E', '#D48265', '#6CA5F8', '#9DC764'],
     )
 
-    return line
+    return line, op
