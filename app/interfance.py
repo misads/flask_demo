@@ -8,7 +8,7 @@ from flask import current_app as app, Blueprint, jsonify, render_template, abort
 from flask.helpers import safe_join
 from app import utils
 from pyecharts import Scatter3D
-from pyecharts import Kline, Line
+from pyecharts import Kline, Line, Overlap
 
 from app.models import db, Fund, Favourite, History, Theme, Wealth, Trade
 
@@ -273,6 +273,128 @@ def line_chart(date, values, title='Graph 1', today=None, tomorrow=None):
                 else:
                     return u'9-7(获利后逐渐高抛)'
 
+    relu = lambda x: max(0, x)
+
+    def advanced_level(values, ave5, ema):
+        l = len(values)
+        ans = [0. for i in range(l)]
+        buyin = [0. for i in range(l)]
+        bad = False
+        for i in range(1, l):
+            v, a, e = values[i], ave5[i], ema[i]
+            v_, a_ = values[i-1], ave5[i-1]
+
+            if (v - v_) / v_ * 100. > 2.8 and (v > a or v > e):
+                bad = False
+
+            if a < e:
+                if v < a:
+                    if ans[i-1] <= 0.2:
+                        ans[i] = ans[i-1]
+                    else:
+                        ans[i] = 0.
+                else:
+                    max_30 = max(values[relu(i-30): i])
+                    rate_max_30 = (v - max_30) / max_30 * 100.
+
+                    if rate_max_30 < -42:
+                        ans[i] = max(ans[i-1], 0.3)
+                    elif rate_max_30 < -35:
+                        ans[i] = max(ans[i-1], 0.25)
+                    elif rate_max_30 < -28:
+                        ans[i] = max(ans[i-1], 0.2)
+                    elif rate_max_30 < -21:
+                        ans[i] = max(ans[i-1], 0.15)
+                    elif rate_max_30 < -14:
+                        ans[i] = max(ans[i-1], 0.1)
+                    elif rate_max_30 < -7:
+                        ans[i] = max(ans[i-1], 0.05)
+                    else:
+                        ans[i] = max(ans[i-1], 0.)
+                    if ans[i] > ans[i-1]:
+                        buyin[i] = ans[i] - ans[i-1]
+
+            else:
+
+                if (v - v_) / v_ * 100. < -3 and v < a:  # 一天跌3%
+                    ans[i] = min(ans[i - 1], 0.3)
+                    bad = True
+                elif (v - v_) / v_ * 100. < -2.8 and v < a:  # 对于成长性不用这个 对于医药等蓝筹或广发等稳定型的才用
+                    ans[i] = min(ans[i - 1], 0.4)
+                    bad = True
+                else:
+                    ema_rate = (ema[i] - ema[i-1]) / ema[i-1] * 100
+                    if -0.25 < ema_rate < 0.25:
+                        if ans[i-1] <= 0.3:
+                            ans[i] = 0.3
+                        else:
+                            ans[i] = ans[i-1]  # ema平坦不能贸然操作
+
+                    else:
+
+                        if v < e:
+                            ans[i] = 0.5
+                        elif v >= e and v < a:
+                            ans[i] = .65
+                        else:
+                            if v_ < a_ and v >= a:  # 上穿均线
+                                min_30 = min(values[relu(i - 30): i])
+                                rate_min_30 = (v - min_30) / min_30 * 100.
+                                if ans[i-1] >= 0.65:
+                                    ans[i] = ans[i-1]
+                                else:
+                                    if rate_min_30 > 15:
+                                        ans[i] = 0.75
+                                    elif rate_min_30 > 7:
+                                        ans[i] = 0.8
+                                    else:
+                                        ans[i] = 0.83
+                            else:
+                                if ans[i-1] <= 0.3:
+                                    ans[i] = max(0.3, ans[i-1] * 2)
+                                elif ans[i-1] <= 0.6:
+                                    ans[i] = 0.65
+                                else:
+                                    ans[i] = ans[i-1]
+                                    if ans[i] > 0.65:
+                                        min_30 = min(values[relu(i - 30): i])
+                                        rate_min_30 = (v - min_30) / min_30 * 100.
+                                        if rate_min_30 > 50:
+                                            ans[i] = min(ans[i - 1], 0.6)
+                                        elif rate_min_30 > 35:
+                                            ans[i] = min(ans[i - 1], 0.65)
+                                        elif rate_min_30 > 24:
+                                            ans[i] = min(ans[i - 1], 0.7)
+                                        elif rate_min_30 > 15:
+                                            ans[i] = min(ans[i - 1], 0.75)
+                                        elif rate_min_30 > 7:
+                                            ans[i] = min(ans[i - 1], 0.8)
+
+
+            s = sum(buyin[relu(i-7): i])
+            if s > 0:
+                ans[i] = max(ans[i], s)  # 7天内有买入不减仓
+
+            if bad:
+                if ans[i] > 0.3 and ans[i - 1] < 0.3 and a > e:
+                    ans[i] = 0.3
+                else:
+                    ans[i] = min(ans[i], ans[i-1])  # 走坏不加仓
+            # else:
+            #     if (v - v_) / v_ < -0.03:
+            #         return u'5'
+            #     if v < e:
+            #         return u'不超过5'
+            #     elif v >= e and v < a:
+            #         return u'6-7'
+            #     else:
+            #         if v_ < a_ and v >= a:  # 上穿均线
+            #             return u'9'
+            #         else:
+            #             return u'9-7(获利后逐渐高抛)'
+
+        return ans
+
     op = ['?', '?', u'保持不动', '']
 
     op[0] = level(values[-2], ave5[-2], ema[-2], values[-3], ave5[-3])
@@ -319,37 +441,40 @@ def line_chart(date, values, title='Graph 1', today=None, tomorrow=None):
             op[0] = u'不宜贸然操作 6-7'
 
     op[3] = '(%s %s)' % (low, high)
-    # def get_level(l):
-    #     if '10' in l:
-    #         return 10
-    #     if '0' in l:
-    #         return 0
-    #     if '1' in l:
-    #         return 6
-    #
-    #     if '2' in l:
-    #         return 2
-    #
-    #     if '3' in l:
-    #         return 10  # 居然越高越好
-    #
-    #     if '4' in l:  # 1-3
-    #         return 8  # 居然越高越好
-    #     if '5' in l:
-    #         return 1
-    #     if '6' in l:
-    #         return 10
-    #     if '7' in l:
-    #         return 10  # # 居然越高越好
-    #     if '8' in l:
-    #         return 9  # 7-10 牛市时9很有作用
-    #     if '9' in l:
-    #         return 10  # 7-10 牛市时9很有作用
+    def get_level(l):
+        if '10' in l:
+            return 1.
+        if '0' in l:
+            return 0
+        if '1' in l:
+            return .6
+
+        if '2' in l:
+            return .2
+
+        if '3' in l:
+            return .3  # 居然越高越好
+
+        if '4' in l:  # 1-3
+            return .4  # 居然越高越好
+        if '5' in l:
+            return .5
+        if '6' in l:
+            return .6
+        if '7' in l:
+            return .7  # # 居然越高越好
+        if '8' in l:
+            return .8  # 7-10 牛市时9很有作用
+        if '9' in l:
+            return .9  # 7-10 牛市时9很有作用
     #
     #
     #
     # levels = [get_level(level(values[i], ave5[i], ema[i], values[i-1], ave5[i-1])) for i in range(1, len(values))]
-    # levels = [0] + levels
+    # levels = [0.] + levels
+
+    levels = advanced_level(values, ave5, ema)
+    levels = [round(i, 2) for i in levels]
     # l_now = 0
     # balance = 1000000.
     # share = 0.
@@ -391,7 +516,7 @@ def line_chart(date, values, title='Graph 1', today=None, tomorrow=None):
         label_text_size=15,
         label_emphasis_textsize=15,
         is_random=False,
-        label_color=['#3C505E', '#D48265', '#6CA5F8', '#9DC764'],
+        label_color=['#3C505E', '#D48265', '#6CA5F8', '#F8CF47', '#9DC764'],
     )
 
     line.add(
@@ -413,7 +538,7 @@ def line_chart(date, values, title='Graph 1', today=None, tomorrow=None):
         label_text_size=15,
         label_emphasis_textsize=15,
         is_random=False,
-        label_color=['#3C505E', '#D48265', '#6CA5F8', '#9DC764'],
+        label_color=['#3C505E', '#D48265', '#6CA5F8', '#F8CF47', '#9DC764'],
     )
 
     line.add(
@@ -435,14 +560,60 @@ def line_chart(date, values, title='Graph 1', today=None, tomorrow=None):
         label_text_size=15,
         label_emphasis_textsize=15,
         is_random=False,
-        label_color=['#3C505E', '#D48265', '#6CA5F8', '#9DC764'],
+        label_color=['#3C505E', '#D48265', '#6CA5F8', '#F8CF47', '#9DC764'],
     )
 
-    line.add(
-        "乖离率",
+    # line.add(
+    #     "乖离率",
+    #     date,
+    #     offset,
+    #     yaxis_min='dataMin',
+    #     is_label_show=False,
+    #     yaxis_type='value',
+    #     is_datazoom_extra_show=False,
+    #     datazoom_extra_range=[90, 100],
+    #     datazoom_extra_type='both',
+    #     is_smooth=True,
+    #     mark_point=["max", "min"],
+    #     is_datazoom_show=True,
+    #     datazoom_type='both',
+    #     datazoom_range=[100-scale, 100],
+    #     line_width=2,
+    #     label_text_size=15,
+    #     label_emphasis_textsize=15,
+    #     is_random=False,
+    #     label_color=['#3C505E', '#D48265', '#6CA5F8', '#9DC764', '#F8CF47'],
+    # )
+    # line.add(
+    #     "仓位",
+    #     date,
+    #     levels,
+    #     yaxis_min='dataMin',
+    #     is_label_show=False,
+    #     yaxis_type='value',
+    #     is_datazoom_extra_show=False,
+    #     datazoom_extra_range=[90, 100],
+    #     datazoom_extra_type='both',
+    #     is_smooth=True,
+    #     mark_point=["max", "min"],
+    #     is_datazoom_show=True,
+    #     datazoom_type='both',
+    #     datazoom_range=[100-scale, 100],
+    #     line_width=2,
+    #     label_text_size=15,
+    #     label_emphasis_textsize=15,
+    #     yaxis_index=1,
+    #     is_add_yaxis=True,
+    #     is_random=False,
+    #     label_color=['#3C505E', '#D48265', '#6CA5F8', '#9DC764', '#F8CF47'],
+    # )
+    cangwei = Line(title, width=1000, height=500)
+    cangwei.add(
+        "仓位",
         date,
-        offset,
-        yaxis_min='dataMin',
+        levels,
+        yaxis_min=0,
+        yaxis_max=1.,
         is_label_show=False,
         yaxis_type='value',
         is_datazoom_extra_show=False,
@@ -456,8 +627,14 @@ def line_chart(date, values, title='Graph 1', today=None, tomorrow=None):
         line_width=2,
         label_text_size=15,
         label_emphasis_textsize=15,
+        yaxis_index=1,
+        is_add_yaxis=True,
         is_random=False,
-        label_color=['#3C505E', '#D48265', '#6CA5F8', '#9DC764'],
+        label_color=['#F8CF47'],
     )
 
-    return line, op
+    overlap = Overlap(title, width=1000, height=500)
+    overlap.add(line)
+    overlap.add(cangwei, is_add_yaxis=True, yaxis_index=1)
+
+    return overlap, op
