@@ -2,17 +2,92 @@
 import datetime
 import os
 import random
+import re
 import time
+import numpy as np
+import io
 
-from flask import current_app as app, Blueprint, jsonify, render_template, abort, send_file, session, request, redirect
+import requests
+from flask import current_app as app, Blueprint, jsonify, render_template, abort, send_file, session, request, redirect, make_response
 from flask.helpers import safe_join
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+
 from app import utils
 from pyecharts import Scatter3D
 from pyecharts import Kline, Line, Overlap
+import matplotlib.pyplot as plt
+import seaborn as sns
+from matplotlib.pyplot import Figure, FigureCanvasBase
 
 from app.models import db, Fund, Favourite, History, Theme, Wealth, Trade
+from app.utils import get_k_line
 
 interfance = Blueprint('interfance', __name__)
+
+plt.rcParams['font.family'] = ['Microsoft YaHei']  # 用来正常显示中文标签
+plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
+
+
+def get_name(code):
+    url = 'http://fund.eastmoney.com/pingzhongdata/%s.js' % code
+
+    try:
+        response = requests.get(url)
+    except:
+        return [], [], []
+
+    if response.status_code == 200:
+        text = response.text
+        pattern = 'fS_name = "(.*?)"'
+        name = re.findall(pattern, text)[0]
+
+        return name
+    return ''
+
+
+@interfance.route('/corcoef')
+def corcoef():
+    requests = request.args
+    if 'ids' not in requests:
+        return jsonify({'failed': 'argument "ids" needed'})
+
+    ids = requests['ids'].split(',')
+    if len(ids) <= 1:
+        return jsonify(['failed'])
+    for idx in ids:
+        if len(idx) != 6 or not idx.isdigit():
+            return jsonify({'failed': 'invalid fund id'})
+
+    # ids = ['110022', '270041', '002697', '161725','161725','161725','161725']
+    names = [get_name(idx)[:6] for idx in ids]
+    value = [get_k_line(idx)[1][-120:] for idx in ids]
+    corrcoef = np.corrcoef(value)
+    # corrcoef = corrcoef.tolist()
+
+    # a = np.random.rand(4,3)
+
+    fig, ax = plt.subplots(figsize=(12, 9))
+
+    # sns.heatmap(pd.DataFrame(np.round(a,2), columns = ['a', 'b', 'c'], index = range(1,5)),
+    #                 annot=True, vmax=1,vmin = 0, xticklabels= True, yticklabels= True, square=True)
+    sns.heatmap(np.round(corrcoef, 2), annot=True, vmax=1, vmin=0, xticklabels=True, yticklabels=True,
+                square=True)
+
+    ax.set_yticklabels(names, fontsize=12, rotation=360, horizontalalignment='right')
+    names = [name[:3] + '\n' + name[3:] for name in names]
+    ax.set_xticklabels(names, fontsize=12)
+
+    canvas = FigureCanvasAgg(fig)
+
+    output = io.BytesIO()
+    canvas.print_png(output)
+    # plt.imsave(output, fig)
+    # canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
 
 
 @interfance.route('/test')

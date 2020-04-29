@@ -148,6 +148,9 @@ def fund():
 
     q = request.args.get('q')
     if q:
+        if ',' in q:
+            return redirect('/corcoef?ids=' + q)
+
         theme_q = Theme.query.filter_by(name=q).first()
         if theme_q:
             theme = utils.get_theme(theme_q.link)
